@@ -1,58 +1,116 @@
-#pragma once
-
 #include <cassert>
 #include <limits>
 #include <random>
+#include <cuda.h>
+#include <curand_kernel.h>
 #include <curand.h>
-#include <cuda_profiler_api.h> //For profiling
-#include <chrono> //For profiling
+#include <cuda_profiler_api.h>
+#include <chrono>
+
 #include <thrust/copy.h>
 #include <thrust/device_vector.h>
-#include <thrust/system/cuda/execution_policy.h>
-#include <omp.h>
-#include <map>
+#include <thrust/execution_policy.h>
 
-
-// convert a linear index to a row index
-struct row_index : public thrust::unary_function<size_t,size_t>
+//initialize curand states
+__global__ void initCurand(curandState *state, unsigned long long *seed)
 {
-	size_t c; // number of columns
-	__host__ __device__
-	row_index(size_t _c)
-      : c(_c) 
-	{ }
+  unsigned int threadId = blockIdx.x * blockDim.x + threadIdx.x;
+  curand_init(seed[threadId], 0, 0, &state[threadId]);
+}
 
-  __host__ __device__
-  size_t operator()(size_t i)
-  {
-    return i / c;
-  }
-};
-
-//Sample number with geometric distribution:
+//sample random numbers with geometric distribution
 template <typename T>
-struct geometric_distribution : public thrust::unary_function<T,T>
+__global__ void sample(curandState *state, T *data, const T num, const double oneminusp)
 {
-  #define DOUBLES
-  #ifdef DOUBLES
-  const double p;
-  const double maxvalinv;
-  #else
-  const float p;
-  const float maxvalinv;
-  #endif
+  unsigned int threadId = blockIdx.x * blockDim.x + threadIdx.x;
+  unsigned int idx = threadId * num;
+  curandState mState = state[threadId];
+  //each thread generates 'num' random numbers with geometric distribution
+  for(unsigned int i = 0; i < num; i++, idx++)
+    data[idx] = __log2f(1.0f-curand_uniform(&mState))/__log2f(oneminusp)+1;
+  state[threadId] = mState;
+}
 
-  geometric_distribution(const double _p, const double _maxvalinv)
-    : p(_p),
-    maxvalinv(_maxvalinv)
+//naive way of removing excessive indices
+template <typename T>
+__global__ void naive(curandState *state, T *data, const T *split, const T *to_remove)
+{
+  unsigned int threadId = blockIdx.x * blockDim.x + threadIdx.x;
+  unsigned int idx = split[threadId];
+  unsigned int num = split[threadId+1]-split[threadId];
+  curandState mState = state[threadId];
+
+  for(unsigned int i = 0; i < to_remove[threadId]; i++)
+  {
+    //pick a random element and remove it if it wasn't removed before
+    unsigned int r = curand_uniform(&mState)*num;
+    if(data[idx+r] == (T)-1)
+      --i;
+    data[idx+r] = (T)-1;
+  }
+  state[threadId] = mState;
+}
+
+//Vitter's Algorithm A (base case of Algorithm D)
+template <typename T>
+__global__ void algorithmA(curandState *state, T *data, const T *split, const T *to_remove)
+{
+  unsigned int threadId = blockIdx.x * blockDim.x + threadIdx.x;
+  unsigned int idx = split[threadId];
+  unsigned int num = split[threadId+1]-split[threadId];
+  curandState mState = state[threadId];
+
+  float top = num - to_remove[threadId];
+  float Nreal = num;
+  float r = curand_uniform(&mState);  
+  float quot = top/Nreal;
+
+  for(unsigned int i = 0; i < num; i++, idx++)
+  {
+    if(quot <= r)
+    {
+      r = curand_uniform(&mState);
+      data[idx+1] = (T)-1;
+      quot = 1;
+    } else
+      top--;
+    Nreal--;
+    quot *= top/Nreal;
+  }
+  state[threadId] = mState;
+}
+
+//functor for filtering elements less or equal a constant
+template <typename T>
+struct less_equal_functor
+{
+
+  T max_idx;
+  less_equal_functor(const T _max_idx)
+    : max_idx(_max_idx)
   { }
 
-  __device__
-  T operator()(T x)
-  {
-    return __log2f(1.0f-maxvalinv*x)/__log2f(1.0f-p)+1;
-    //return log1p(-_maxvalinv*(double)x)/log1p(-_p);
-  }
+  __host__ __device__
+    bool operator()(T x)
+    {
+      return x <= max_idx;
+    }
+};
+
+//functor for filtering elements greater than a constant
+template <typename T>
+struct greater_than_functor
+{
+  T max_idx;
+  greater_than_functor(const T _max_idx)
+    : max_idx(_max_idx)
+  { }
+
+  __host__ __device__
+    bool operator()(T x)
+    {
+      return x > max_idx;
+    }
 };
 
 //initialize prng only once (seed can be set nevertheless)
@@ -61,148 +119,150 @@ class cuda_generator
 {
   private:
     static cuda_generator<T> *_instance;
-	//static std::map<int, cuda_generator<T>*> _instance;
-    thrust::device_vector<T> device_data;
-	//T *output;
+
+    T *device_data;
+
+    //(GPU-)states for random number generators
+    curandState *state;
+    //seeds on CPU and GPU for each thread of the random number generator
+    unsigned long long *seeds, *seeds_device;
+    //
     size_t N;
-    curandGenerator_t prng;
-	cudaStream_t s;
-  public:
-    cuda_generator(size_t size)
+    const T num_threads = 1<<10;
+    const T num_threads_per_group = 1<<4;
+    const T num_groups = num_threads / num_threads_per_group;
+
+    cuda_generator()
     {
-  fprintf(stderr, "creating instance\n");
-  fflush(stderr);
-	  cudaSetDevice(omp_get_thread_num());
       N = 0;
-      device_data = thrust::device_vector<T>(size);
-      N = size;
-      //curandCreateGenerator(&prng, CURAND_RNG_PSEUDO_DEFAULT);
-      //curandCreateGenerator(&prng, CURAND_RNG_PSEUDO_MTGP32);
-      curandCreateGenerator(&prng, CURAND_RNG_PSEUDO_MT19937);
-	  //output = 0;
-	  cudaStreamCreate(&s);
-	  curandSetStream(prng, s);
+      cudaMalloc((void**)&state, num_threads * sizeof(curandState));
+      cudaMalloc((void**)&seeds_device, num_threads * sizeof(unsigned long long));
+      seeds = new unsigned long long[num_threads];
+      device_data = 0;
     }
 
-    void call_curand_generate()
+
+  public:
+    static cuda_generator<T> *instance()
     {
-      curandGenerate(prng, thrust::raw_pointer_cast(device_data.data()), N);
+      if(!_instance)
+        _instance = new cuda_generator<T>();
+      return _instance;
     }
-
-  //public:
-  static cuda_generator<T> *instance()
-  {
-	  int tid = omp_get_thread_num();
-  fprintf(stderr, "returning instance %d\n", tid);
-  fflush(stderr);
-  //return new cuda_generator<T>();
-  //#pragma omp critical
-    if(_instance)
-      _instance = new cuda_generator<T>();
-    return _instance;
-  }
-
-  template <typename It>
-  void generate_block(It dest, size_t size, double p,
-                      unsigned long long seed = 0)
-  {
-    using value_type = typename std::iterator_traits<It>::value_type;			
-    assert(p > 0 && p < 1);
-
-    if (seed == 0) {
-      seed = std::random_device{}();
-    }
-
-    //allocate memory on GPU if blocksize changed
-    if(N != size)
-    {
-	  fprintf(stderr, "reallocating (%d --> %d)\n", N, size);
-      device_data = thrust::device_vector<T>(size);
-      N = size;
-	  /*
-	  if(output)
-		  cudaFree(output);
-	  cudaMalloc(&output, N*sizeof(T));
-	  */
-    }
-
-    //set seed of prng
-    curandSetPseudoRandomGeneratorSeed(prng, seed);
-
-    //fill array with random numbers (should depend on size of the data type)
-    call_curand_generate();
-
-    //fprintf(stderr, ".");
-
-    //geometric distribution and prefix sum
-    auto tbegin = thrust::make_transform_iterator(device_data.begin(), geometric_distribution<T>(p, 1.0/(std::numeric_limits<T>::max())));
-    auto tend = thrust::make_transform_iterator(device_data.end(), geometric_distribution<T>(p, 1.0/(std::numeric_limits<T>::max())));
-	thrust::transform(device_data.begin(), device_data.end(), device_data.begin(), geometric_distribution<T>(p, 1.0/(std::numeric_limits<T>::max())));
-	#if 0
-	//thrust::inclusive_scan(thrust::system::cuda::par, tbegin, tend, device_data.begin());// Determine temporary device storage requirements for inclusive prefix sum
-	void     *d_temp_storage = NULL;
-	size_t   temp_storage_bytes = 0;
-	cub::DeviceScan::InclusiveSum(d_temp_storage, temp_storage_bytes, &device_data[0], output, N,0,1);
-	// Allocate temporary storage for inclusive prefix sum
-	cudaMalloc(&d_temp_storage, temp_storage_bytes);
-	// Run inclusive prefix sum
-	cub::DeviceScan::InclusiveSum(d_temp_storage, temp_storage_bytes, &device_data[0], output, N,0,1);
-	cudaFree(d_temp_storage);
-	#else
-	#if 0
-    {
-	  //thrust::inclusive_scan(thrust::system::cuda::par, device_data.begin(), device_data.end(), output);
-      thrust::counting_iterator<size_t> indices(0);
-      //auto tbegin = thrust::make_transform_iterator(indices, row_index<size_t>(N/2));
-      //auto tend = thrust::make_transform_iterator(indices, row_index<size_t>(N/2))+N*sizeof(T);
-      //thrust::inclusive_scan_by_key(tbegin, tend, device_data.begin(), device_data.begin());
-	  for(int n = N; n >= 1; n >>= 1)
-	  {
-		  /*
-		  thrust::inclusive_scan_by_key(thrust::make_transform_iterator(indices, row_index(N/2)),
-			thrust::make_transform_iterator(indices, row_index(N/2)) + N,
-			device_data.begin(),
-			device_data.begin());
-		  */
-		  auto row_iterator = thrust::make_transform_iterator(indices, row_index(n));
-		  std::chrono::time_point<std::chrono::high_resolution_clock> t = std::chrono::high_resolution_clock::now();
-		  for(int i = 0; i < 100; i++)
-			  thrust::inclusive_scan_by_key(row_iterator,
-				row_iterator + N,
-				device_data.begin(),
-				device_data.begin());
-		  float dt = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - t).count();
-		  fprintf(stderr, "%d %f\n", n, dt/100);
-	  }
-    }
-	#else
-    {
-	  thrust::inclusive_scan(thrust::system::cuda::par.on(s), device_data.begin(), device_data.end(), device_data.begin());
-    }
-	#endif
-	#endif
 	
-    //read back data
-    //cudaMemcpy(&dest[0], device_data.data().get(), N*sizeof(T), cudaMemcpyDeviceToHost);
-	//cudaMemcpy(&dest[0], output, N*sizeof(T), cudaMemcpyDeviceToHost);
-	//cudaDeviceSynchronize();
-  }
+	//first call: num_samples, N, 0, num_threads, ...
+	static void sampleR(T n, T N, T j, T k, T *startIdx, T *numSamples)
+	{
+		if(k == j+1)
+		{
+			numSamples[j] = n;
+			startIdx[j] = N;
+			return;
+		}
+		T N2 = N/2;
+		T x = n/2;//StochasticLib1::Hypergeometric(n, N2, N);
+		sampleR(x, N2, j, (j+k)/2, startIdx, numSamples);
+		sampleR(n-x, N-N2, (j+k)/2, k, startIdx, numSamples);
+		for(int i = (j+k)/2; i < k; i++)
+		  startIdx[i] += N2;
+	}
+
+    template <typename It>
+      void generate_block(It dest, size_t size, double p,
+          unsigned long long seed = 0)
+      {
+        using value_type = typename std::iterator_traits<It>::value_type;
+        assert(p > 0 && p < 1);
+
+        if (seed == 0)
+        {
+          seed = std::random_device{}();
+        }
+
+        //allocate memory on GPU if blocksize changed
+        if(N != size)
+        {
+          if(device_data)
+            cudaFree(device_data);
+          cudaMalloc((void**)&device_data, sizeof(T)*size);
+          N = size;
+        }
+        for(int i = 0; i < num_threads; i++)
+          seeds[i] = seed+i;
+        cudaMemcpy(seeds_device, seeds, num_threads*sizeof(unsigned long long), cudaMemcpyHostToDevice);
+        //initialize prng-states
+        initCurand<<<num_groups, num_threads_per_group>>>(state, seeds_device);
+        //fill array with geometrically distributed random numbers
+        sample<<<num_groups, num_threads_per_group>>>(state, device_data, (T)(N/num_threads), 1.0f-p);
+
+        //prefix-sum for calculating array-indices
+        thrust::inclusive_scan(thrust::device, device_data, device_data+N, device_data);
+
+        //TODO: get universe size from command line parameter
+        T universe = 1.5*size;
+
+        //count number of indices that are small enough
+        T num_indices = thrust::count_if(thrust::device, device_data, device_data+N, less_equal_functor<T>(universe));
+
+        //divide array using hypergeometric deviates (one subarray per processor)
+        T n = 1<<28;
+		#if 0
+        //TODO!!! - for now just take subarrays of equal size
+        //intervals for each thread:
+        T *split = new T[num_threads+1];
+        T *to_remove = new T[num_threads];
+        T remove_remaining = num_indices-n;
+        T remove_total = 0;
+        for(int i = 0; i < num_threads+1; i++)
+        {
+          split[i] = (double)i*n/(double)num_threads+0.5;
+          unsigned int thread_removes = (remove_remaining)/(double)(num_threads-i);
+          remove_total += thread_removes;
+          to_remove[i] = thread_removes;
+          remove_remaining -= thread_removes;
+        }
+		#else
+        T *split = new T[num_threads+1];
+        T *to_remove = new T[num_threads];
+		
+		sampleR(n, N, 0, num_threads, split+1, to_remove);
+		split[0] = 0;
+		/*
+		for(int i = 0; i <= num_threads; i++)
+			fprintf(stderr, "%d ", split[i]);
+		for(int i = 0; i < num_threads; i++)
+			fprintf(stderr, "%d ", to_remove[i]);
+		*/
+		#endif
+
+        //remove excessive elements per processor
+        T *device_split, *device_to_remove;
+        //copy start- and end-indices of subarrays as well as the number
+        //of elements to be sampled from these subarrays to GPU memory
+        cudaMalloc((void**)&device_split, sizeof(T)*(num_threads+1));
+        cudaMalloc((void**)&device_to_remove, sizeof(T)*num_threads);
+        cudaMemcpy(device_split, split, sizeof(T)*(num_threads+1), cudaMemcpyHostToDevice);
+        cudaMemcpy(device_to_remove, to_remove, sizeof(T)*num_threads, cudaMemcpyHostToDevice);
+
+        //sample elements (elements are removed by setting the index to some value larger
+        //than the universe size
+        //naive<<<num_groups, num_threads_per_group>>>(state, device_data, device_split, device_to_remove);
+        algorithmA<<<num_groups, num_threads_per_group>>>(state, device_data, device_split, device_to_remove);
+
+        //compaction
+        T final_count = thrust::copy_if(thrust::device, device_data, device_data+num_indices, device_data, less_equal_functor<T>(universe)) - device_data;
+		//T final_count = thrust::remove_copy(thrust::device, device_data, device_data+num_indices, device_data, (T)-1) - device_data;
+		fprintf(stderr, "result: %lu / %lu elements\n", final_count, n);
+        //read back data
+        //cudaMemcpy(&dest[0], device_data, N*sizeof(T), cudaMemcpyDeviceToHost);
+      }
 };
-//template <typename T> std::map<int, cuda_generator<T>*> cuda_generator<T>::_instance;
-template <typename T> cuda_generator<T>* cuda_generator<T>::_instance;
-/*
-//TODO: not working!!! curand complains about not using a 64-bit prng.
-template <>
-void cuda_generator<unsigned long long>::call_curand_generate()
-{
-  curandGenerateLongLong(prng, thrust::raw_pointer_cast(device_data.data()), N);
-}
-*/
+template <typename T> cuda_generator<T> *cuda_generator<T>::_instance = 0;
 
 struct cuda_gen {
   template <typename It>
   static void generate_block(It dest, size_t size, double p,
-                             unsigned int seed = 0)
+      unsigned int seed = 0)
   {
     using value_type = typename std::iterator_traits<It>::value_type;
     cuda_generator<value_type> *generator = cuda_generator<value_type>::instance();
@@ -211,40 +271,45 @@ struct cuda_gen {
 
   template <typename It>
   static void generate_block(It begin, It end, double p,
-                             unsigned int seed = 0)
+      unsigned int seed = 0)
   {
     generate_block(begin, end-begin, p, seed);
   }
 };
 
-#if 1
-//For profiling
 int main(int argc, char **argv)
 {
   unsigned int N = 1024*1024*512;
   std::vector<unsigned int> vec(N);
   fprintf(stderr, "\n");
-  //cudaSetDevice(1);
-  do {
-	  int num_threads = 1;
-	  std::chrono::time_point<std::chrono::high_resolution_clock> t = std::chrono::high_resolution_clock::now();
-	  #pragma omp parallel num_threads(1)
-	  {
-		  cuda_generator<unsigned int> *generator = new cuda_generator<unsigned int>(N/num_threads);
-		  cudaDeviceSynchronize();
-  cudaProfilerStart();
-	  for(int i = 0; i < 10; i++)
-		generator->generate_block(vec.begin()+omp_get_thread_num()*N/num_threads, N/num_threads, 0.5);
-  cudaProfilerStop();
-	  }
-	  //N /= 2;
-	  float dt = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - t).count();
-	  fprintf(stderr, "%d %f\n", N, dt/10);
+  cudaSetDevice(3);
+  do 
+  {
+    //unsigned int num_threads = 1;
+        cuda_gen::generate_block(vec.begin(), N, 0.5);
+    std::chrono::time_point<std::chrono::high_resolution_clock> t = std::chrono::high_resolution_clock::now();
+    //#pragma omp parallel num_threads(1)
+    {
+      //cuda_generator<unsigned int> *generator = new cuda_generator<unsigned int>(N/num_threads);
+      cudaDeviceSynchronize();
+      cudaProfilerStart();
+      for(int i = 0; i < 10; i++)
+        //generator->generate_block(vec.begin()/*+omp_get_thread_num()*N/num_threads*/, N/num_threads, 0.5);
+        cuda_gen::generate_block(vec.begin(), N, 0.5);
+      cudaProfilerStop();
+      cudaDeviceSynchronize();
+    }
+    //N /= 2;
+    float dt = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - t).count();
+    fprintf(stderr, "%d %f\n", N, dt/10);
   } while(N > N);
   //fprintf(stderr, "done\n");
   double avg = 0;
   avg = vec[N-1]/(double)N;
   fprintf(stderr, "avg: %f\n", avg);
+  for(int i = 0; i < 100; i++)
+  {
+	fprintf(stderr, "%lu ", vec[i]);
+  }
   return 0;
 }
-#endif
