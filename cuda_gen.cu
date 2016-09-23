@@ -4,13 +4,14 @@
 #include <cuda.h>
 #include <curand_kernel.h>
 #include <curand.h>
+//#define PROFILING
 #ifdef PROFILING
 #include <cuda_profiler_api.h>
 #endif
 #include "util.h"
 #include "timer.h"
 #include <stocc/stocc.h>
-#include <randomc/randomc.h>
+#include <stocc/randomc.h>
 
 #include <thrust/copy.h>
 #include <thrust/find.h>
@@ -22,10 +23,16 @@
 #include <algorithm>
 #include <cmath>
 #include <utility>
-#include <set>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323814
+#endif
+
+#ifdef USE_ALGORITHM_H
+#include <set>
+#else
+#define _DEFINITIONS_H_
+#include <sampler.h>
 #endif
 
 //initialize curand states
@@ -43,7 +50,7 @@ __global__ void sample(curandState *state, T *data, const size_t count, const T 
   size_t idx = threadId * num;
   curandState mState = state[threadId];
   //each thread generates 'num' random numbers with geometric distribution
-  float lpinv = 1/log2(oneminusp);
+  float lpinv = 1.0/log2(oneminusp);
   for(unsigned int i = 0; i < num && idx < count; i+=4, idx+=4)
   {
     float4 r = make_float4(__log2f(1-curand_uniform(&mState)),__log2f(1-curand_uniform(&mState)),__log2f(1-curand_uniform(&mState)),__log2f(1-curand_uniform(&mState)));
@@ -189,17 +196,31 @@ class cuda_generator
       } while(num_indices < k);
 
       //sample num_indices - k elements to remove
+      T *removeArray = new T[num_indices - k];
+      #ifdef USE_ALGORITHM_H
       std::mt19937 gen(seed);
       std::uniform_int_distribution<T> dist(0, num_indices-1);
       std::set<T> remove;
 
       while(remove.size() < num_indices - k)
         remove.insert(dist(gen));
-      //copy indices to array and copy to GPU
-      T *removeArray = new T[num_indices - k];
+
       int idx = 0;
       for(auto it = remove.begin(); it != remove.end(); it++)
         removeArray[idx++] = *it;
+      #else
+	  size_t hole_idx = 0;
+	  const size_t basecase = 1024;
+	  size_t to_remove = num_indices - k;
+	  HashSampling<> hs((ULONG)seed, to_remove);
+	  SeqDivideSampling<> s(hs, basecase, (ULONG)seed);
+	  // end - begin - 1 because the range is inclusive
+	  s.sample(num_indices - 1, to_remove, [&](ULONG pos) {
+		  removeArray[hole_idx++] = pos;
+	  });
+	  assert(hole_idx == to_remove);
+      #endif
+      //copy indices to GPU
       T *device_removeArray;
       cudaMalloc((void**)&device_removeArray, sizeof(T) * (num_indices-k));
       cudaMemcpyAsync(device_removeArray, removeArray, sizeof(T) * (num_indices-k), cudaMemcpyHostToDevice);
@@ -262,10 +283,14 @@ int main(int argc, char **argv)
   cudaSetDevice(3);
   size_t num_threads = 1;
   arg_parser args(argc, argv);
+  #ifdef USE64BIT
+  size_t universe = args.get<size_t>("n", 1ULL << 50);
+  #else
   size_t universe = args.get<size_t>("n", 1<<30);
-  size_t k = args.get<size_t>("k", 1<<20); // sample size
+  #endif
+  size_t k = args.get<size_t>("k", 1<<28); // sample size
 
-  size_t iterations = args.get<size_t>("i", (1<<30)/k);
+  size_t iterations = args.get<size_t>("i", 3*(1ULL<<30)/k);
   const bool verbose = args.is_set("v") || args.is_set("vv");
   const bool very_verbose = args.is_set("vv");
   const bool quiet = args.is_set("q");
