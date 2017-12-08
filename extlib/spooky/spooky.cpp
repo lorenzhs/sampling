@@ -12,6 +12,8 @@
 #include <memory.h>
 #include "spooky.h"
 
+#include <tlx/define.hpp>
+
 #define ALLOW_UNALIGNED_READS 1
 
 //
@@ -77,37 +79,37 @@ void SpookyHash::Short(
     switch (remainder)
     {
     case 15:
-    d += ((uint64)u.p8[14]) << 48;
+        d += ((uint64)u.p8[14]) << 48; TLX_ATTRIBUTE_FALLTHROUGH;
     case 14:
-        d += ((uint64)u.p8[13]) << 40;
+        d += ((uint64)u.p8[13]) << 40; TLX_ATTRIBUTE_FALLTHROUGH;
     case 13:
-        d += ((uint64)u.p8[12]) << 32;
+        d += ((uint64)u.p8[12]) << 32; TLX_ATTRIBUTE_FALLTHROUGH;
     case 12:
         d += u.p32[2];
         c += u.p64[0];
         break;
     case 11:
-        d += ((uint64)u.p8[10]) << 16;
+        d += ((uint64)u.p8[10]) << 16; TLX_ATTRIBUTE_FALLTHROUGH;
     case 10:
-        d += ((uint64)u.p8[9]) << 8;
+        d += ((uint64)u.p8[9]) << 8; TLX_ATTRIBUTE_FALLTHROUGH;
     case 9:
-        d += (uint64)u.p8[8];
+        d += (uint64)u.p8[8]; TLX_ATTRIBUTE_FALLTHROUGH;
     case 8:
         c += u.p64[0];
         break;
     case 7:
-        c += ((uint64)u.p8[6]) << 48;
+        c += ((uint64)u.p8[6]) << 48; TLX_ATTRIBUTE_FALLTHROUGH;
     case 6:
-        c += ((uint64)u.p8[5]) << 40;
+        c += ((uint64)u.p8[5]) << 40; TLX_ATTRIBUTE_FALLTHROUGH;
     case 5:
-        c += ((uint64)u.p8[4]) << 32;
+        c += ((uint64)u.p8[4]) << 32; TLX_ATTRIBUTE_FALLTHROUGH;
     case 4:
         c += u.p32[0];
         break;
     case 3:
-        c += ((uint64)u.p8[2]) << 16;
+        c += ((uint64)u.p8[2]) << 16; TLX_ATTRIBUTE_FALLTHROUGH;
     case 2:
-        c += ((uint64)u.p8[1]) << 8;
+        c += ((uint64)u.p8[1]) << 8; TLX_ATTRIBUTE_FALLTHROUGH;
     case 1:
         c += (uint64)u.p8[0];
         break;
@@ -338,10 +340,10 @@ void SpookyHash::Final(uint64 *hash1, uint64 *hash2)
     }
 
     // mix in the last partial block, and the length mod sc_blockSize
-    memset(&((uint8 *)data)[remainder], 0, (sc_blockSize-remainder));
+    memset(&const_cast<uint8*>((const uint8*)data)[remainder], 0, (sc_blockSize-remainder));
 
-    ((uint8 *)data)[sc_blockSize-1] = remainder;
-    
+    const_cast<uint8*>((const uint8*)data)[sc_blockSize-1] = remainder;
+
     // do some final mixing
     End(data, h0,h1,h2,h3,h4,h5,h6,h7,h8,h9,h10,h11);
 
