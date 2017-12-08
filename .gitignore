@@ -1,6 +1,11 @@
 #ignore legacy folders
 method_B
 DistributedSampling*
+
+# GNU global
+GPATH
+GRTAGS
+GTAGS
 # Created by https://www.gitignore.io/api/c++,cmake,emacs,vim
 
 ### C++ ###

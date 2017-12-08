@@ -36,6 +36,8 @@ struct SamplingConfig {
     bool write_to_disk;
     // Number of iterations
     ULONG iterations;
+    // Use binomial approximation
+    bool use_binom;
 
     // Shared Mem OMP
     void LogDump(FILE * /* out */) const { }

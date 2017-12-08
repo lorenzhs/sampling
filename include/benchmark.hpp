@@ -51,7 +51,7 @@ struct statistics {
         return mean;
     }
     double stddev() {
-        assert(count > 1);
+        // assert(count > 1);
         return sqrt(nvar / (count - 1));
     }
 };

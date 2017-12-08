@@ -11,40 +11,35 @@
 #ifndef METHOD_H_HEADER
 #define METHOD_H_HEADER
 
+#include "definitions.hpp"
+#include "dSFMT.hpp"
+
+#include <tlx/define.hpp>
+#include <tlx/math.hpp>
+
 #include <algorithm>
 #include <iterator>
 #include <limits>
 #include <vector>
 
-#include "dSFMT.hpp"
-#include "definitions.hpp"
-
-#define LOG2(X) ((unsigned)(8 * sizeof(unsigned long long) - __builtin_clzll((X)) - 1))
-#ifndef unlikely
-#define unlikely(x) __builtin_expect((x), 0)
-#endif
-#ifndef likely
-#define likely(x) __builtin_expect((x), 1)
-#endif
-
 namespace sampling {
 
-template <ULONG blocksize = (1 << 24), ULONG dummy = std::numeric_limits<ULONG>::max()>
+template <ULONG blocksize = (1 << 16), ULONG dummy = std::numeric_limits<ULONG>::max()>
 class HashSampling {
 public:
     HashSampling(ULONG seed, ULONG n) {
         // Modification: dSFMT
-        dsfmt_init_gen_rand(&dsfmt, seed);
+        _dSFMT::dsfmt_init_gen_rand(&dsfmt, seed);
         max_blocksize = std::max(std::min(n, blocksize), (ULONG)_dSFMT::dsfmt_get_min_array_size());
         max_blocksize += (max_blocksize & 0x1); // needs to be even
-        randblock.reserve(max_blocksize);
+        randblock.resize(max_blocksize);
 
         resizeTable(n);
     }
 
     void resizeTable(ULONG n) {
         // Table size
-        table_lg = 3 + LOG2(n) + isNotPowerOfTwo(n);
+        table_lg = 3 + tlx::integer_log2_ceil(n);
         table_size = ipow(2, table_lg);
         hash_table.resize(table_size, dummy);
         indices.reserve(table_size);
@@ -57,7 +52,7 @@ public:
     template <typename F>
     void sample(ULONG N, ULONG n, F &&callback) {
         ULONG variate, index, hash_elem;
-        ULONG population_lg = (LOG2(N) + isNotPowerOfTwo(N));
+        ULONG population_lg = tlx::integer_log2_ceil(N);
         ULONG address_mask = (table_lg >= population_lg) ? 0 : population_lg - table_lg;
 
         // Modification: dSFMT
@@ -66,7 +61,6 @@ public:
         curr_blocksize += (curr_blocksize & 0x1); // needs to be even
         curr_blocksize = std::min(curr_blocksize, max_blocksize);
         _dSFMT::dsfmt_fill_array_close_open(&dsfmt, &(randblock[0]), curr_blocksize);
-        //_dSFMT::dsfmt_fill_array_open_close(&dsfmt, &(randblock[0]), curr_blocksize);
         ULONG array_index = 0;
         // Modification: End
 
@@ -81,7 +75,6 @@ public:
                     curr_blocksize += (curr_blocksize & 0x1); // needs to be even
                     curr_blocksize = std::min(curr_blocksize, max_blocksize);
                     _dSFMT::dsfmt_fill_array_close_open(&dsfmt, &(randblock[0]), curr_blocksize);
-                    //_dSFMT::dsfmt_fill_array_open_close(&dsfmt, &(randblock[0]), curr_blocksize);
                     array_index = 0;
                 }
                 variate = N * randblock[array_index++];
@@ -91,7 +84,7 @@ public:
                 hash_elem = *(offset + index);
 
                 // Table lookup
-                if (likely(hash_elem == dummy))
+                if (TLX_LIKELY(hash_elem == dummy))
                     break; // done
                 else if (hash_elem == variate)
                     continue; // already sampled
@@ -140,10 +133,6 @@ private:
             base *= base;
         }
         return result;
-    }
-
-    inline bool isNotPowerOfTwo(ULONG x) {
-        return (x & (x - 1)) != 0;
     }
 };
 

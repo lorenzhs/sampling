@@ -225,30 +225,35 @@ endmacro(set_join)
 add_subdirectory(extlib/tlx)
 set(SAMPLING_LINK_LIBRARIES tlx ${SAMPLING_LINK_LIBRARIES})
 
+# find MPI
+find_package(MPI REQUIRED)
+include_directories(${MPI_INCLUDE_PATH})
 
 ################################################################################
 ### Build Macros
 
 # macro for building main programs with correct libraries
 macro(do_build TARGETNAME)
-
   add_executable(${TARGETNAME} ${ARGN})
   target_link_libraries(${TARGETNAME} sampling)
-  # target_compile_definitions(${TARGETNAME} PUBLIC ${SAMPLING_DEFINITONS})
-  # target_include_directories(${TARGETNAME} PUBLIC ${PROJECT_SOURCE_DIR})
-  # target_include_directories(${TARGETNAME} SYSTEM PUBLIC ${SAMPLING_INCLUDE_DIRS})
-  # target_link_libraries(${TARGETNAME} ${SAMPLING_LINK_LIBRARIES})
-
 endmacro(do_build)
+
+# macro for building main programs with correct libraries
+macro(mpi_build TARGETNAME)
+  add_executable(${TARGETNAME} ${ARGN})
+  target_link_libraries(${TARGETNAME} sampling ${MPI_LIBRARIES})
+endmacro(mpi_build)
 
 # macro for building a single-source thrill program
 macro(build_prog PROGNAME)
-
   string(REPLACE "/" "_" TARGETNAME "${PROGNAME}") # replace slashes
-
   do_build(${TARGETNAME} ${PROGNAME}.cpp ${ARGN})
-
 endmacro(build_prog)
+
+macro(build_mpi_prog PROGNAME)
+  string(REPLACE "/" "_" TARGETNAME "${PROGNAME}") # replace slashes
+  mpi_build(${TARGETNAME} ${PROGNAME}.cpp ${ARGN})
+endmacro(build_mpi_prog)
 
 ################################################################################
 

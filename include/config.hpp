@@ -8,27 +8,26 @@
  ******************************************************************************/
 
 #pragma once
-#ifndef DEFINITIONS_HEADER
-#define DEFINITIONS_HEADER
+#ifndef CONFIG_HEADER
+#define CONFIG_HEADER
 
 namespace sampling {
 
-// Constants
-typedef long long LONG;
-typedef unsigned long long ULONG;
-typedef int INT;
-typedef unsigned int UINT;
-typedef unsigned long long NodeID;
-typedef unsigned long long EdgeID;
-typedef unsigned long long NodeWeight;
-typedef unsigned long long EdgeWeight;
-typedef int PEID;
+// MSVC doesn't define __SSE4_2__, so also check for __AVX__ // NOLINT
+#if defined(__SSE4_2__) || defined(__AVX__)
+#define SAMPLING_HAVE_SSE4_2
+#endif
 
-const PEID ROOT = 0;
+// 64 or 32 bit environment?
+#if __GNUC__
+  #if __x86_64__ || __ppc64__
+    #define ENV64BIT
+  #else
+    #define ENV32BIT
+  #endif
+#endif
 
-#define SEEDA 28475421
-#define SEEDB 52150599
 
 } // namespace sampling
 
-#endif // DEFINITIONS_HEADER
+#endif // CONFIG_HEADER

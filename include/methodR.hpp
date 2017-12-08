@@ -15,6 +15,7 @@
 #include "hypergeometric_distribution.hpp"
 #include "methodH.hpp"
 #include "methodSH.hpp"
+#include "sampling_config.hpp"
 
 namespace sampling {
 
@@ -23,9 +24,13 @@ class SeqDivideSampling {
 public:
     typedef BaseSampler base_type;
 
-    SeqDivideSampling(BaseSampler &base_sampler, ULONG base_size, ULONG seed)
-        : hyp(seed), base_sampler(std::move(base_sampler)), base_size(base_size) {
-    }
+    SeqDivideSampling(SamplingConfig &config, BaseSampler &base_sampler, ULONG base_size, ULONG seed)
+        : config(config)
+        , hyp(seed)
+        , rng(seed) // okay to seed both with the same seed, we're only going to use one
+        , base_sampler(std::move(base_sampler))
+        , base_size(base_size)
+    { }
 
     template <typename F>
     void sample(ULONG N, ULONG n, F &&callback, ULONG offset = 0) {
@@ -35,14 +40,23 @@ public:
         }
 
         ULONG N_split = N / 2;
-        // std::cout << "draw " << n << " from " << N << " with " << N_split << std::endl;
-        ULONG x = hyp(n, N - n, N_split); //stocc.Hypergeometric(N_split, n, N);
+        ULONG x;
+        if (config.use_binom) {
+            std::binomial_distribution<> binom(n, N_split * 1.0 / N);
+            x = binom(rng);
+            //x = stocc.Binomial(n, (double)N_split/N);
+        } else {
+            //x = stocc.Hypergeometric(n, N_split, N);
+            x = hyp(n, N - n, N_split);
+        }
         sample(N_split, x, callback, offset);
         sample(N - N_split, n - x, callback, offset + N_split);
     }
 
 private:
+    SamplingConfig &config;
     hypergeometric_distribution<ULONG> hyp;
+    std::mt19937 rng;
     BaseSampler base_sampler;
     ULONG base_size;
 };
