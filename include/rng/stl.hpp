@@ -53,7 +53,7 @@ public:
 
     //! Generate `size` uniform integers from [min, max] (i.e., both inclusive)
     template <typename int_t>
-    void generate_int_block(int_t min, int_t max, std::vector<double> &output,
+    void generate_int_block(int_t min, int_t max, std::vector<int_t> &output,
                             size_t size)
     {
         if (size > output.size()) {
@@ -87,7 +87,7 @@ public:
 private:
     generator_t generator_;
     std::uniform_real_distribution<double> uniform_double_;
-}
+};
 
 } // namespace rng
 } // namespace sampling

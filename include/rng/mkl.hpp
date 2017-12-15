@@ -39,7 +39,7 @@ public:
     }
 
     //! Generate `size` uniform doubles from [0, 1)
-    static void generate_block(std::vector<double> &output, size_t size) {
+    void generate_block(std::vector<double> &output, size_t size) {
         check_size(size);
         if (size > output.size()) {
             output.resize(size);
@@ -86,8 +86,7 @@ private:
         if (size >= std::numeric_limits<MKL_INT>::max()) {
             LOG1
                 << "Error: MKL generator block size exceeds value range of MKL_INT:"
-                << size << " >= " << std::numeric_limits<MKL_INT>::max()
-                << std::endl;
+                << size << " >= " << std::numeric_limits<MKL_INT>::max();
             return false;
         }
         return true;
@@ -95,7 +94,7 @@ private:
 
     //! MKL state object
     VSLStreamStatePtr stream;
-}
+};
 
 } // namespace rng
 } // namespace sampling
