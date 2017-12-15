@@ -8,6 +8,7 @@
 # All rights reserved. Published under the BSD-2 license in the LICENSE file.
 ################################################################################
 
+build_prog(run_methodB)
 build_prog(run_methodD)
 build_prog(run_methodH)
 build_prog(run_methodSH)
