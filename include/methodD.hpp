@@ -12,7 +12,7 @@
 #define METHOD_D_HEADER
 
 #include "definitions.hpp"
-#include "dSFMT.hpp"
+#include "rng/dSFMT.hpp"
 
 #include <cmath>
 
@@ -172,7 +172,7 @@ class Vitter {
         }
 
     private:
-        dSFMT gen;
+        rng::dSFMT gen;
 };
 
 } // namespace sampling

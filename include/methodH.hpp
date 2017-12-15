@@ -12,7 +12,7 @@
 #define METHOD_H_HEADER
 
 #include "definitions.hpp"
-#include "dSFMT.hpp"
+#include "rng/dSFMT.hpp"
 
 #include <tlx/define.hpp>
 #include <tlx/math.hpp>
@@ -29,8 +29,9 @@ class HashSampling {
 public:
     HashSampling(ULONG seed, ULONG n) {
         // Modification: dSFMT
-        _dSFMT::dsfmt_init_gen_rand(&dsfmt, seed);
-        max_blocksize = std::max(std::min(n, blocksize), (ULONG)_dSFMT::dsfmt_get_min_array_size());
+        rng::_dSFMT::dsfmt_init_gen_rand(&dsfmt, seed);
+        max_blocksize = std::max(std::min(n, blocksize),
+                                 (ULONG)rng::_dSFMT::dsfmt_get_min_array_size());
         max_blocksize += (max_blocksize & 0x1); // needs to be even
         randblock.resize(max_blocksize);
 
@@ -57,10 +58,10 @@ public:
 
         // Modification: dSFMT
         ULONG curr_blocksize = std::max(std::min(n, blocksize),
-                                        (ULONG)_dSFMT::dsfmt_get_min_array_size());
+                                        (ULONG)rng::_dSFMT::dsfmt_get_min_array_size());
         curr_blocksize += (curr_blocksize & 0x1); // needs to be even
         curr_blocksize = std::min(curr_blocksize, max_blocksize);
-        _dSFMT::dsfmt_fill_array_close_open(&dsfmt, &(randblock[0]), curr_blocksize);
+        rng::_dSFMT::dsfmt_fill_array_close_open(&dsfmt, &(randblock[0]), curr_blocksize);
         ULONG array_index = 0;
         // Modification: End
 
@@ -71,10 +72,10 @@ public:
                 // Modification: dSFMT
                 if (array_index >= curr_blocksize) {
                     curr_blocksize = std::max(std::min(n, blocksize),
-                                              (ULONG)_dSFMT::dsfmt_get_min_array_size());
+                                              (ULONG)rng::_dSFMT::dsfmt_get_min_array_size());
                     curr_blocksize += (curr_blocksize & 0x1); // needs to be even
                     curr_blocksize = std::min(curr_blocksize, max_blocksize);
-                    _dSFMT::dsfmt_fill_array_close_open(&dsfmt, &(randblock[0]), curr_blocksize);
+                    rng::_dSFMT::dsfmt_fill_array_close_open(&dsfmt, &(randblock[0]), curr_blocksize);
                     array_index = 0;
                 }
                 variate = N * randblock[array_index++];
@@ -117,7 +118,7 @@ public:
     }
 
 private:
-    _dSFMT::dsfmt_t dsfmt;
+    rng::_dSFMT::dsfmt_t dsfmt;
 
     std::vector<ULONG> hash_table, indices;
     std::vector<double> randblock;

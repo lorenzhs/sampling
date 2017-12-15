@@ -59,7 +59,7 @@
 #ifndef SAMPLING_HYPERGEOMETRIC_DISTRIBUTION_HEADER
 #define SAMPLING_HYPERGEOMETRIC_DISTRIBUTION_HEADER
 
-#include "dSFMT.hpp"
+#include "rng/dSFMT.hpp"
 #include <tlx/logger.hpp>
 
 #include <cmath>
@@ -228,7 +228,7 @@ private:
     }
 
     // Data members:
-    dSFMT uniform_;
+    rng::dSFMT uniform_;
 };
 
 using hypergeometric = hypergeometric_distribution<>;

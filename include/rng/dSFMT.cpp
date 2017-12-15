@@ -1,5 +1,5 @@
 /*******************************************************************************
- * include/dSFMT.cpp
+ * include/rng/dSFMT.cpp
  *
  * A double-precision SIMD-oriented Fast Mersenne Twister
  *
@@ -53,6 +53,7 @@
 #include "dSFMT.hpp"
 
 namespace sampling {
+namespace rng {
 namespace _dSFMT {
 
 extern "C" {
@@ -281,4 +282,5 @@ void dsfmt_chk_init_gen_rand(dsfmt_t *dsfmt, uint32_t seed, int mexp) {
 } // extern "C"
 
 } // namespace _dSFMT
+} // namespace rng
 } // namespace sampling

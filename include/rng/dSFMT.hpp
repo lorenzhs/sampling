@@ -1,5 +1,5 @@
 /*******************************************************************************
- * include/dSFMT.hpp
+ * include/rng/dSFMT.hpp
  *
  * A double-precision SIMD-oriented Fast Mersenne Twister
  *
@@ -61,6 +61,7 @@
 #include <vector>
 
 namespace sampling {
+namespace rng {
 namespace _dSFMT {
 
 extern "C" {
@@ -443,4 +444,5 @@ private:
     size_t index_, block_size_, block_id_;
 };
 
+} // namespace rng
 } // namespace sampling

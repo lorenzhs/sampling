@@ -11,7 +11,6 @@
 #define METHOD_P_HEADER
 
 #include "definitions.hpp"
-#include "dSFMT.hpp"
 #include "hash.hpp"
 #include "methodR.hpp"
 #include "sampling_config.hpp"
