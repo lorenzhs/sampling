@@ -43,7 +43,7 @@ class method_B {
 public:
     using generator_t = Generator;
 
-    method_B(size_t seed) : rng(seed) {}
+    method_B(size_t seed) : rng(seed), seed(seed) {}
 
     /**
      * @param dest output iterator
@@ -53,8 +53,7 @@ public:
      */
     template <typename int_t>
     auto sample(std::vector<int_t> &output, size_t k, size_t universe,
-                global_stats *stats = nullptr, const bool verbose = false,
-                unsigned int seed = 0)
+                global_stats *stats = nullptr, const bool verbose = false)
     {
         double p; size_t ssize;
         std::tie(p, ssize) = calc_params(universe, k);
@@ -69,9 +68,6 @@ public:
         do {
             t.reset();
             rng.generate_geometric_block(p, output, ssize);
-            // ensure a new seed is used in every iteration
-            // (0 = generate a random seed)
-            if (seed != 0) seed++;
             t_gen += t.get_and_reset();
 
             inplace_prefix_sum_disp<true>(dest, dest+ssize);
@@ -98,9 +94,9 @@ public:
         if (usable_samples > k) {
             // pick k out of the pos-dest-1 elements
 #ifdef FIX_STABLE
-            pos = fix_stable(dest, pos, k, seed);
+            pos = fix_stable(dest, pos, k);
 #else
-            pos = fix(dest, pos, k, seed);
+            pos = fix(dest, pos, k);
 #endif
             // pos is now the past-the-end iterator of the sample indices
             assert(pos - dest == (long)k);
@@ -283,14 +279,10 @@ private:
     // Sampling without replacement to pick position of holes.  Optimized for
     // this scenario, not general purpose.
     template <typename It>
-    static auto pick_holes(It begin, It end, size_t k, unsigned int seed,
-                           bool sorted) {
+    auto pick_holes(It begin, It end, size_t k, bool sorted) {
         assert(end - begin > (long)k);
         const size_t to_remove = (end-begin) - k;
 
-        if (seed == 0) {
-            seed = std::random_device{}();
-        }
         auto holes = std::make_unique<int64_t[]>(to_remove + 1);
         holes[to_remove] = (end-begin);
         size_t hole_idx = 0;
@@ -299,7 +291,7 @@ private:
         // Only use for k up to 4MM, it gets slow after that
         if (sorted && k < (1<<22)) {
             // SORTED hash sampling
-            SortedHashSampling<> hs((ULONG)seed, to_remove);
+            SortedHashSampling<> hs((ULONG)++seed, to_remove);
             SeqDivideSampling<decltype(hs)> s(
                 hs, basecase, (ULONG)seed);
             // end - begin - 1 because the range is inclusive
@@ -307,7 +299,7 @@ private:
                     holes[hole_idx++] = pos;
                 });
         } else {
-            HashSampling<> hs((ULONG)seed, to_remove);
+            HashSampling<> hs((ULONG)++seed, to_remove);
             SeqDivideSampling<decltype(hs)> s(hs, basecase, (ULONG)seed);
             // end - begin - 1 because the range is inclusive
             s.sample(end-begin-1, to_remove, [&](auto pos) {
@@ -326,11 +318,11 @@ private:
     }
 
     template <typename It>
-    static auto fix_stable(It begin, It end, size_t k, unsigned int seed = 0) {
+    auto fix_stable(It begin, It end, size_t k) {
         assert(end - begin > (long)k);
 
         // Get holes (sorted), then apply memmove compactor
-        auto holes = pick_holes(begin, end, k, seed, true);
+        auto holes = pick_holes(begin, end, k, true);
 
         size_t to_remove = (end-begin) - k;
         return compact(begin, holes.get(), to_remove);
@@ -338,12 +330,12 @@ private:
 
 
     template <typename It>
-    static auto fix(It begin, It end, size_t k, unsigned int seed = 0) {
+    auto fix(It begin, It end, size_t k) {
         assert(end-begin > (long)k);
         size_t to_remove = (end-begin) - k;
 
         // Holes should be sorted so we can process them in one sweep
-        auto indices = pick_holes(begin, end, k, seed, true);
+        auto indices = pick_holes(begin, end, k, true);
 
         auto last = end - 1;
         ssize_t pos = to_remove;
@@ -360,6 +352,7 @@ private:
 
 
     generator_t rng;
+    size_t seed;
 };
 
 } // namespace sampling
