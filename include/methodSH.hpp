@@ -42,7 +42,7 @@ public:
     void resizeTable(ULONG n) {
         // Table size
         table_lg = 3 + tlx::integer_log2_ceil(n);
-        table_size = ipow(2, table_lg);
+        table_size = 1UL << table_lg;
         hash_table.resize(table_size, dummy);
 
         // Offset for fast indexing
@@ -150,16 +150,6 @@ private:
     ULONG table_lg, table_size, max_blocksize;
     ULONG *offset;
     ULONG orig_n;
-
-    inline ULONG ipow(ULONG base, ULONG exp) {
-        ULONG result = 1;
-        while (exp) {
-            if (exp & 1) result *= base;
-            exp >>= 1;
-            base *= base;
-        }
-        return result;
-    }
 };
 
 } // namespace sampling
