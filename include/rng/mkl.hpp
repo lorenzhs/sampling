@@ -96,6 +96,38 @@ public:
         CheckVslError(status);
     }
 
+    //! Get a single [0,1) double. Computes increasingly large blocks internally
+    //! so that this is fast.  May block while next block is generated.
+    TLX_ATTRIBUTE_ALWAYS_INLINE
+    double next() {
+        if (TLX_UNLIKELY(index_ >= block_size_)) {
+            if (block_id_ > 2 && ((block_id_ + 1) & block_id_) == 0) {
+                // block_id_ + 1 is a power of two. We appear to need a lot of
+                // random numbers, increase the blocksize to reduce RNG overhead
+                block_size_ *= 2;
+            }
+            block_size_ = std::max(block_size_,
+                                   minimum_reasonable_block_size());
+            // generate_block takes care of resizing the vector for us
+            generate_block(randblock_, block_size_);
+            index_ = 0;
+            block_id_++;
+        }
+        return randblock_[index_++];
+    }
+
+    //! Generate a uniform integer from [min, max] (i.e., both inclusive)
+    template <typename int_t>
+    TLX_ATTRIBUTE_ALWAYS_INLINE
+    int_t next_int(int_t min, int_t max) {
+        return next() * (max - min + 1) + min;
+    }
+
+    //! Alias for next()
+    TLX_ATTRIBUTE_ALWAYS_INLINE
+    double operator()() {
+        return next();
+    }
 
 private:
     //! Check that `size` fits into an MKL_INT
@@ -111,6 +143,8 @@ private:
 
     //! MKL state object
     VSLStreamStatePtr stream;
+    std::vector<double> randblock_;
+    size_t index_ = 0, block_size_ = 0, block_id_ = 0;
 };
 
 } // namespace rng
