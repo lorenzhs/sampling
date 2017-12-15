@@ -38,6 +38,12 @@ public:
         vslDeleteStream(&stream);
     }
 
+    //! Re-seed the random generator
+    void seed(size_t seed) {
+        vslDeleteStream(&stream);
+        vslNewStream(&stream, VSL_BRNG_SFMT19937, seed);
+    }
+
     //! Generate `size` uniform doubles from [0, 1)
     void generate_block(std::vector<double> &output, size_t size) {
         check_size(size);
