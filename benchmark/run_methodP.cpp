@@ -34,7 +34,7 @@ int main(int argn, char **argv) {
     parse_parameters(argn, argv, config);
 
     // Main algorithm
-    FILE *fp;
+    FILE *fp = nullptr; // set to nullptr to shut up -Wmaybe-uninitialized
     if (rank == ROOT) {
         std::cout << "sample (n=" << config.n <<
             ", N=" << config.N <<
@@ -110,7 +110,8 @@ int main(int argn, char **argv) {
                   << " stddev=" << stats.stddev()
                   << " iterations=" << config.iterations
                   << " gen=" << rng::select_t::name << std::endl;
-        fprintf(fp, "RESULT runner=P n=%llu N=%llu p=%d time=%f stddev=%f iterations=%llu\n", config.n, config.N, size, stats.avg(), stats.stddev(), config.iterations);
+        fprintf(fp, "RESULT runner=P n=%llu N=%llu p=%d time=%f stddev=%f iterations=%llu\n",
+                config.n, config.N, size, stats.avg(), stats.stddev(), config.iterations);
         fclose(fp);
     }
 
