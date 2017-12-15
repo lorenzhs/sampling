@@ -384,6 +384,17 @@ public:
         index_ = 0;
     }
 
+    //! Minimum number of elements that needs to be generated at a time
+    size_t minimum_block_size() const {
+        return _dSFMT::dsfmt_get_min_array_size();
+    }
+
+    //! Minimum number of elements that needs to be generated at a time for
+    //! reasonable performance
+    size_t minimum_reasonable_block_size() const {
+        return minimum_block_size();
+    }
+
     //! Generate `size` [0,1) doubles in `output`
     void generate_block(std::vector<double> &output, size_t size)
     {

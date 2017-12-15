@@ -44,6 +44,17 @@ public:
         vslNewStream(&stream, VSL_BRNG_SFMT19937, seed);
     }
 
+    //! Minimum number of elements that needs to be generated at a time
+    size_t minimum_block_size() const {
+        return 1; // it's unknown how many MKL generates internally
+    }
+
+    //! Minimum number of elements that needs to be generated at a time for
+    //! reasonable performance
+    size_t minimum_reasonable_block_size() const {
+        return 512; // chosen by fair guess?
+    }
+
     //! Generate `size` uniform doubles from [0, 1)
     void generate_block(std::vector<double> &output, size_t size) {
         check_size(size);

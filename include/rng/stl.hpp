@@ -29,6 +29,17 @@ public:
         generator_.seed(seed);
     }
 
+    //! Minimum number of elements that needs to be generated at a time
+    size_t minimum_block_size() const {
+        return 1;
+    }
+
+    //! Minimum number of elements that needs to be generated at a time for
+    //! reasonable performance
+    size_t minimum_reasonable_block_size() const {
+        return 1;
+    }
+
     //! Generate a uniform double from [0, 1)
     double next() {
         return uniform_double_(generator_);
