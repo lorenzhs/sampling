@@ -41,6 +41,7 @@ option(SAMPLING_USE_MKL
 set(SAMPLING_DEFINITIONS "")
 set(SAMPLING_INCLUDE_DIRS "")
 set(SAMPLING_LINK_LIBRARIES "")
+set(EXEC_LINK_LIBRARIES "sampling")
 
 if(NOT MSVC)
   # enable warnings
@@ -241,7 +242,7 @@ if(SAMPLING_USE_MKL)
     #message(STATUS "Found MKL: ${MKL_ROOT_DIR}")
     list(APPEND SAMPLING_DEFINITIONS "HAVE_MKL")
     list(APPEND SAMPLING_INCLUDE_DIRS ${MKL_INCLUDE_DIR})
-    list(APPEND SAMPLING_LINK_LIBRARIES ${MKL_LP_SEQUENTIAL_LIBS})
+    list(APPEND EXEC_LINK_LIBRARIES ${MKL_LP_LIBRARY} ${MKL_CORE_LIBRARY} ${MKL_SEQUENTIAL_LIBRARY})
   else()
     message(STATUS "Could not find MKL, no problem, using slower generators")
   endif()
@@ -253,13 +254,13 @@ endif()
 # macro for building main programs with correct libraries
 macro(do_build TARGETNAME)
   add_executable(${TARGETNAME} ${ARGN})
-  target_link_libraries(${TARGETNAME} sampling)
+  target_link_libraries(${TARGETNAME} ${EXEC_LINK_LIBRARIES})
 endmacro(do_build)
 
 # macro for building main programs with correct libraries
 macro(mpi_build TARGETNAME)
   add_executable(${TARGETNAME} ${ARGN})
-  target_link_libraries(${TARGETNAME} sampling ${MPI_LIBRARIES})
+  target_link_libraries(${TARGETNAME} ${EXEC_LINK_LIBRARIES} ${MPI_LIBRARIES})
 endmacro(mpi_build)
 
 # macro for building a single-source thrill program
