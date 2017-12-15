@@ -10,6 +10,9 @@
 
 cmake_minimum_required(VERSION 2.8.12)
 
+# custom cmake scripts
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+
 project(sampling)
 #set_target_properties(sampling PROPERTIES LINKER_LANGUAGE CXX)
 
@@ -27,6 +30,9 @@ endif()
 
 option(SAMPLING_USE_LTO
   "Compile with -flto (link-time optimization)." OFF)
+
+option(SAMPLING_USE_MKL
+  "Build with Intel MKL random generator if available." ON)
 
 
 ################################################################################
@@ -217,8 +223,7 @@ macro(set_join var)
   string(STRIP ${var} "${${var}}")
 endmacro(set_join)
 
-
-###############################################################################
+################################################################################
 
 # use tlx
 
@@ -228,6 +233,19 @@ set(SAMPLING_LINK_LIBRARIES tlx ${SAMPLING_LINK_LIBRARIES})
 # find MPI
 find_package(MPI REQUIRED)
 include_directories(${MPI_INCLUDE_PATH})
+
+# try to find MKL
+if(SAMPLING_USE_MKL)
+  find_package(MKL)
+  if(MKL_FOUND)
+    #message(STATUS "Found MKL: ${MKL_ROOT_DIR}")
+    list(APPEND SAMPLING_DEFINITIONS "HAVE_MKL")
+    list(APPEND SAMPLING_INCLUDE_DIRS ${MKL_INCLUDE_DIR})
+    list(APPEND SAMPLING_LINK_LIBRARIES ${MKL_LP_SEQUENTIAL_LIBS})
+  else()
+    message(STATUS "Could not find MKL, no problem, using slower generators")
+  endif()
+endif()
 
 ################################################################################
 ### Build Macros

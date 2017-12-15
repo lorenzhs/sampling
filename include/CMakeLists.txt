@@ -11,9 +11,16 @@
 # glob general sources
 file(GLOB SAMPLING_SRCS
   RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}/*.[ch]pp
-  ${CMAKE_CURRENT_SOURCE_DIR}/rng/*.[ch]pp
+  *.[ch]pp
+  rng/stl.hpp
+  rng/dSFMT.hpp
+  rng/dSFMT.cpp
   )
+
+# if we have Intel MKL, add rng/mkl.hpp
+if(MKL_FOUND)
+  set(SAMPLING_SRCS ${SAMPLING_SRCS} rng/mkl.hpp)
+endif()
 
 add_library(sampling STATIC ${SAMPLING_SRCS})
 set_target_properties(sampling PROPERTIES LINKER_LANGUAGE CXX)
