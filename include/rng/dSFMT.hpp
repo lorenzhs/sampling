@@ -58,6 +58,8 @@
 #include <tlx/define.hpp>
 
 #include <cassert>
+#include <cmath>
+#include <limits>
 #include <vector>
 
 namespace sampling {
@@ -430,6 +432,42 @@ public:
             block_id_++;
         }
         return randblock_[index_++];
+    }
+
+    //! Generate a uniform integer from [min, max] (i.e., both inclusive)
+    template <typename int_t>
+    TLX_ATTRIBUTE_ALWAYS_INLINE
+    int_t next_int(int_t min, int_t max) {
+        return next() * (max - min) + min;
+    }
+
+
+    //! Generate `size` uniform integers from [min, max] (i.e., both inclusive)
+    template <typename int_t>
+    void generate_int_block(int_t min, int_t max, std::vector<double> &output,
+                            size_t size)
+    {
+        if (size > output.size()) {
+            output.resize(size);
+        }
+        for (size_t i = 0; i < size; ++i) {
+            output[i] = next_int(min, max);
+        }
+    }
+
+    //! Generate `size` geometrically integers with parameter p
+    template <typename int_t>
+    void generate_geometric_block(double p, std::vector<int_t> &output,
+                                  size_t size)
+    {
+        if (size > output.size()) {
+            output.resize(size);
+        }
+
+        const double denominator = std::log(1.0 - p);
+        for (size_t i = 0; i < size; ++i) {
+            output[i] = std::log(next()) / denominator;
+        }
     }
 
     //! Alias for next()
