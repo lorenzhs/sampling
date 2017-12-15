@@ -89,7 +89,8 @@ int main(int argn, char **argv) {
     std::cout << "RESULT runner=SR"
               << " time=" << stats.avg()
               << " stddev=" << stats.stddev()
-              << " iterations=" << config.iterations << std::endl;
+              << " iterations=" << config.iterations
+              << " gen=" << rng::select_t::name << std::endl;
     fprintf(fp, "RESULT runner=SR time=%f stddev=%f iterations=%llu\n",
             stats.avg(), stats.stddev(), config.iterations);
     fclose(fp);

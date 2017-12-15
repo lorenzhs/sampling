@@ -12,14 +12,16 @@
 #define METHOD_D_HEADER
 
 #include "definitions.hpp"
-#include "rng/dSFMT.hpp"
+#include "rng/select.hpp"
 
 #include <cmath>
 
 namespace sampling {
 
+template <typename Generator = rng::select_t>
 class Vitter {
     public:
+        using generator_t = Generator;
         Vitter(ULONG seed)
             : gen(seed)
         { }
@@ -172,7 +174,7 @@ class Vitter {
         }
 
     private:
-        rng::dSFMT gen;
+        generator_t gen;
 };
 
 } // namespace sampling

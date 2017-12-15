@@ -11,9 +11,11 @@
 #include "parse_parameters.hpp"
 
 #include <include/benchmark.hpp>
+#include <include/methodB.hpp>
 #include <include/methodH.hpp>
 #include <include/sampling_config.hpp>
 #include <include/timer.hpp>
+#include <include/rng/mkl.hpp>
 
 #include <algorithm>
 #include <iostream>
@@ -83,7 +85,8 @@ int main(int argn, char **argv) {
     std::cout << "RESULT runner=H"
               << " time=" << stats.avg()
               << " stddev=" << stats.stddev()
-              << " iterations=" << config.iterations << std::endl;
+              << " iterations=" << config.iterations
+              << " gen=" << rng::select_t::name << std::endl;
     fprintf(fp, "RESULT runner=H time=%f stddev=%f iterations=%llu\n",
             stats.avg(), stats.stddev(), config.iterations);
     fclose(fp);

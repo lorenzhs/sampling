@@ -19,6 +19,8 @@ namespace rng {
 template <typename Generator = std::mt19937_64>
 class stl {
 public:
+    static constexpr const char* name = "stl";
+
     using generator_t = Generator;
 
     //! Initialize new stl random generator

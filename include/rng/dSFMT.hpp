@@ -370,6 +370,7 @@ inline static void do_recursion(w128_t *r, w128_t *a, w128_t * b,
 class dSFMT {
 public:
     static constexpr bool debug = false;
+    static constexpr const char* name = "dSFMT";
 
     dSFMT(size_t seed) : index_(0), block_size_(0), block_id_(0) {
         _dSFMT::dsfmt_init_gen_rand(&dsfmt_, seed);

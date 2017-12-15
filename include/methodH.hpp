@@ -12,7 +12,7 @@
 #define METHOD_H_HEADER
 
 #include "definitions.hpp"
-#include "rng/dSFMT.hpp"
+#include "rng/select.hpp"
 
 #include <tlx/define.hpp>
 #include <tlx/math.hpp>
@@ -24,7 +24,7 @@
 
 namespace sampling {
 
-template <typename Generator = rng::dSFMT>
+template <typename Generator = rng::select_t>
 class HashSampling {
 public:
     using generator_t = Generator;

@@ -50,7 +50,7 @@ int main(int argn, char **argv) {
         // samples_taken = 0;
 
         // Compute sample
-        Vitter vi(config.seed + iteration);
+        Vitter<> vi(config.seed + iteration);
         vi.sample(config.N,
                   config.n,
                   [&](ULONG elem) {
@@ -67,7 +67,7 @@ int main(int argn, char **argv) {
         t.reset();
 
         // Compute sample
-        Vitter vi(config.seed + iteration);
+        Vitter<> vi(config.seed + iteration);
         vi.sample(config.N,
                   config.n,
                   [&](ULONG elem) {
@@ -82,7 +82,8 @@ int main(int argn, char **argv) {
     std::cout << "RESULT runner=D"
               << " time=" << stats.avg()
               << " stddev=" << stats.stddev()
-              << " iterations=" << config.iterations << std::endl;
+              << " iterations=" << config.iterations
+              << " gen=" << rng::select_t::name << std::endl;
     fprintf(fp, "RESULT runner=D time=%f stddev=%f iterations=%llu\n",
             stats.avg(), stats.stddev(), config.iterations);
     fclose(fp);

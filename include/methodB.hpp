@@ -16,7 +16,7 @@
 #include "methodSH.hpp"
 #include "timer.hpp"
 #include "benchmark.hpp"
-#include "rng/dSFMT.hpp"
+#include "rng/select.hpp"
 
 #include <tlx/logger.hpp>
 
@@ -38,7 +38,7 @@ struct global_stats {
     statistics s_sum, s_gen, s_prefsum, s_fix;
 };
 
-template <typename Generator = rng::dSFMT>
+template <typename Generator = rng::select_t>
 class method_B {
 public:
     using generator_t = Generator;

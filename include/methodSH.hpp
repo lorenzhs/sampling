@@ -11,8 +11,8 @@
 #ifndef METHOD_SH_HEADER
 #define METHOD_SH_HEADER
 
-#include "rng/dSFMT.hpp"
 #include "definitions.hpp"
+#include "rng/select.hpp"
 
 #include <tlx/define.hpp>
 #include <tlx/math.hpp>
@@ -24,7 +24,7 @@
 
 namespace sampling {
 
-template <typename Generator = rng::dSFMT>
+template <typename Generator = rng::select_t>
 class SortedHashSampling {
 public:
     using generator_t = Generator;

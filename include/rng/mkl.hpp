@@ -29,6 +29,8 @@ namespace rng {
  */
 class mkl {
 public:
+    static constexpr const char* name = "mkl";
+
     //! Initialize new MKL random generator
     mkl(size_t seed) {
         vslNewStream(&stream, VSL_BRNG_SFMT19937, seed);

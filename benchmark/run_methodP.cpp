@@ -108,7 +108,8 @@ int main(int argn, char **argv) {
                   << " p=" << size
                   << " time=" << stats.avg()
                   << " stddev=" << stats.stddev()
-                  << " iterations=" << config.iterations << std::endl;
+                  << " iterations=" << config.iterations
+                  << " gen=" << rng::select_t::name << std::endl;
         fprintf(fp, "RESULT runner=P n=%llu N=%llu p=%d time=%f stddev=%f iterations=%llu\n", config.n, config.N, size, stats.avg(), stats.stddev(), config.iterations);
         fclose(fp);
     }
