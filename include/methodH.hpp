@@ -82,7 +82,6 @@ public:
                     array_index = 0;
                 }
                 variate = N * randblock[array_index++];
-                // Modification: End
 
                 index = variate >> address_mask;
                 hash_elem = *(offset + index);

@@ -24,16 +24,18 @@
 
 namespace sampling {
 
+template <typename Generator = rng::dSFMT>
 class SortedHashSampling {
 public:
+    using generator_t = Generator;
+
     SortedHashSampling(ULONG seed, ULONG n, ULONG max_bs_param = (1ULL << 24),
                        ULONG dummy = std::numeric_limits<ULONG>::max())
-        : max_bs_param(max_bs_param), dummy(dummy)
+        : rng(seed), max_bs_param(max_bs_param), dummy(dummy)
     {
-        // Modification: dSFMT
-        rng::_dSFMT::dsfmt_init_gen_rand(&dsfmt, seed);
+        // Calculate maximum blocksize and reserve space accordingly
         max_blocksize = std::max(std::min(n, max_bs_param),
-                                 (ULONG)rng::_dSFMT::dsfmt_get_min_array_size());
+                                 (ULONG)rng.minimum_reasonable_block_size());
         max_blocksize += (max_blocksize & 0x1); // needs to be even
         randblock.reserve(max_blocksize);
 
@@ -58,30 +60,28 @@ public:
         ULONG address_mask = (table_lg >= population_lg) ? 0 : population_lg - table_lg;
         orig_n = n;
 
-        // Modification: dSFMT
+        // Generate a fresh random block
         ULONG curr_blocksize = std::max(std::min(n, max_bs_param),
-                                        (ULONG)rng::_dSFMT::dsfmt_get_min_array_size());
+                                        (ULONG)rng.minimum_reasonable_block_size());
         curr_blocksize += (curr_blocksize & 0x1); // needs to be even
         curr_blocksize = std::min(curr_blocksize, max_blocksize);
-        rng::_dSFMT::dsfmt_fill_array_close_open(&dsfmt, &(randblock[0]), curr_blocksize);
+        rng.generate_block(randblock, curr_blocksize);
         ULONG array_index = 0;
-        // Modification: End
 
         while (n > 0) {
             while (true) {
                 // Take sample
 
-                // Modification: dSFMT
+                // Need a new random block?
                 if (array_index >= curr_blocksize) {
                     curr_blocksize = std::max(std::min(n, max_bs_param),
-                                              (ULONG)rng::_dSFMT::dsfmt_get_min_array_size());
+                                              (ULONG)rng.minimum_reasonable_block_size());
                     curr_blocksize += (curr_blocksize & 0x1); // needs to be even
                     curr_blocksize = std::min(curr_blocksize, max_blocksize);
-                    rng::_dSFMT::dsfmt_fill_array_close_open(&dsfmt, &(randblock[0]), curr_blocksize);
+                    rng.generate_block(randblock, curr_blocksize);
                     array_index = 0;
                 }
                 variate = N * randblock[array_index++];
-                // Modification: End
 
                 index = variate >> address_mask;
                 hash_elem = *(offset + index);
@@ -143,7 +143,7 @@ public:
     }
 
 private:
-    rng::_dSFMT::dsfmt_t dsfmt;
+    generator_t rng;
 
     std::vector<ULONG> hash_table;
     std::vector<double> randblock;

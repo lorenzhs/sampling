@@ -51,7 +51,7 @@ int main(int argn, char **argv) {
         // samples_taken = 0;
 
         // Compute sample
-        SortedHashSampling hs(iteration, config.n);
+        SortedHashSampling<> hs(iteration, config.n);
         hs.sample(config.N,
                   config.n,
                   [&](ULONG elem) {
@@ -71,7 +71,7 @@ int main(int argn, char **argv) {
         t.reset();
 
         // Compute sample
-        SortedHashSampling hs(config.seed + iteration, config.n);
+        SortedHashSampling<> hs(config.seed + iteration, config.n);
         hs.sample(config.N,
                   config.n,
                   [&](ULONG elem) {
