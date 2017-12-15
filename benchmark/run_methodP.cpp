@@ -62,7 +62,7 @@ int main(int argn, char **argv) {
         MPI_Barrier(MPI_COMM_WORLD);
 
         // Compute sample
-        ParDivideSampling<> pds(config, config.seed + iteration, size);
+        ParDivideSampling<> pds(config.N, config.k, config.seed + iteration, size);
         pds.sample(config.n,
                    1,
                    size,
@@ -84,7 +84,7 @@ int main(int argn, char **argv) {
         t.reset();
 
         // Compute sample
-        ParDivideSampling<> pds(config, config.seed + iteration, size);
+        ParDivideSampling<> pds(config.N, config.k, config.seed + iteration, size);
         pds.sample(config.n,
                    1,
                    size,

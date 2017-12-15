@@ -52,7 +52,7 @@ int main(int argn, char **argv) {
 
         // Compute sample
         HashSampling<> hs(config.seed + iteration, config.k);
-        SeqDivideSampling<> sds(config, hs, config.k, config.seed + iteration);
+        SeqDivideSampling<> sds(hs, config.k, config.seed + iteration, config.use_binom);
         sds.sample(config.N,
                    config.n,
                    [&](ULONG elem) {
@@ -73,7 +73,7 @@ int main(int argn, char **argv) {
 
         // Compute sample
         HashSampling<> hs(config.seed + iteration, config.k);
-        SeqDivideSampling<> sds(config, hs, config.k, config.seed + iteration);
+        SeqDivideSampling<> sds(hs, config.k, config.seed + iteration, config.use_binom);
         sds.sample(config.N,
                    config.n,
                    [&](ULONG elem) {

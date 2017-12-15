@@ -15,7 +15,6 @@
 #include "hypergeometric_distribution.hpp"
 #include "methodH.hpp"
 #include "methodSH.hpp"
-#include "sampling_config.hpp"
 
 namespace sampling {
 
@@ -24,12 +23,12 @@ class SeqDivideSampling {
 public:
     typedef BaseSampler base_type;
 
-    SeqDivideSampling(SamplingConfig &config, BaseSampler &base_sampler, ULONG base_size, ULONG seed)
-        : config(config)
-        , hyp(seed)
+    SeqDivideSampling(BaseSampler &base_sampler, ULONG base_size, ULONG seed, bool binomial = false)
+        : hyp(seed)
         , rng(seed) // okay to seed both with the same seed, we're only going to use one
         , base_sampler(std::move(base_sampler))
         , base_size(base_size)
+        , use_binomial(binomial)
     { }
 
     template <typename F>
@@ -41,7 +40,7 @@ public:
 
         ULONG N_split = N / 2;
         ULONG x;
-        if (config.use_binom) {
+        if (use_binomial) {
             std::binomial_distribution<> binom(n, N_split * 1.0 / N);
             x = binom(rng);
             //x = stocc.Binomial(n, (double)N_split/N);
@@ -54,11 +53,11 @@ public:
     }
 
 private:
-    SamplingConfig &config;
     hypergeometric_distribution<ULONG> hyp;
     std::mt19937 rng;
     BaseSampler base_sampler;
     ULONG base_size;
+    bool use_binomial;
 };
 
 }

@@ -24,14 +24,14 @@ namespace sampling {
 template <typename LocalSampler = SeqDivideSampling<>, typename H = CRCHash /*Spooky*/>
 class ParDivideSampling {
 public:
-    ParDivideSampling(SamplingConfig &config, ULONG seed, PEID size)
-        : config(config),
-          hyp(seed),
-          hash_seed(seed)
+    ParDivideSampling(ULONG universe_size, ULONG base_size, ULONG seed, PEID size)
+        : hyp(seed),
+          hash_seed(seed),
+          base_size(base_size)
     {
         // Compute input distribution
-        rem = config.N % size;
-        div = config.N / size;
+        rem = universe_size % size;
+        div = universe_size / size;
     }
 
     template <typename F>
@@ -43,10 +43,10 @@ public:
                 ULONG offset = 0) {
         if (j - k == 0) {
             ULONG h = H::hash(hash_seed + i);
-            typename LocalSampler::base_type base_sampler(h, config.k);
+            typename LocalSampler::base_type base_sampler(h, base_size);
             // Allocate hash table for base case
 
-            LocalSampler local_sampler(config, base_sampler, config.k, h);
+            LocalSampler local_sampler(base_sampler, base_size, h);
             local_sampler.sample(N(i+1) - N(i), n, callback, offset);
             return;
         }
@@ -56,7 +56,7 @@ public:
         //stocc.RandomInit(h);
         ULONG N_split = N(m) - N(j-1);
         ULONG x;
-        if (config.use_binom) {
+        if (use_binomial) {
             std::mt19937 rng(h);
             std::binomial_distribution<> binom(n, (double)N_split/(N(k) - N(j-1)));
             x = binom(rng);
@@ -71,11 +71,12 @@ public:
     }
 
 private:
-    SamplingConfig &config;
     hypergeometric_distribution<ULONG> hyp;
     ULONG hash_seed;
     ULONG div;
     PEID rem;
+    ULONG base_size;
+    bool use_binomial;
 
     inline ULONG N(PEID i) {
         return i * div + std::min(i, rem);
