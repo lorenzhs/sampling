@@ -24,13 +24,15 @@
 
 namespace sampling {
 
-template <ULONG blocksize = (1 << 16), ULONG dummy = std::numeric_limits<ULONG>::max()>
 class HashSampling {
 public:
-    HashSampling(ULONG seed, ULONG n) {
+    HashSampling(ULONG seed, ULONG n, ULONG max_bs_param = (1ULL << 16),
+                 ULONG dummy = std::numeric_limits<ULONG>::max())
+        : max_bs_param(max_bs_param), dummy(dummy)
+    {
         // Modification: dSFMT
         rng::_dSFMT::dsfmt_init_gen_rand(&dsfmt, seed);
-        max_blocksize = std::max(std::min(n, blocksize),
+        max_blocksize = std::max(std::min(n, max_bs_param),
                                  (ULONG)rng::_dSFMT::dsfmt_get_min_array_size());
         max_blocksize += (max_blocksize & 0x1); // needs to be even
         randblock.resize(max_blocksize);
@@ -57,7 +59,7 @@ public:
         ULONG address_mask = (table_lg >= population_lg) ? 0 : population_lg - table_lg;
 
         // Modification: dSFMT
-        ULONG curr_blocksize = std::max(std::min(n, blocksize),
+        ULONG curr_blocksize = std::max(std::min(n, max_bs_param),
                                         (ULONG)rng::_dSFMT::dsfmt_get_min_array_size());
         curr_blocksize += (curr_blocksize & 0x1); // needs to be even
         curr_blocksize = std::min(curr_blocksize, max_blocksize);
@@ -71,7 +73,7 @@ public:
 
                 // Modification: dSFMT
                 if (array_index >= curr_blocksize) {
-                    curr_blocksize = std::max(std::min(n, blocksize),
+                    curr_blocksize = std::max(std::min(n, max_bs_param),
                                               (ULONG)rng::_dSFMT::dsfmt_get_min_array_size());
                     curr_blocksize += (curr_blocksize & 0x1); // needs to be even
                     curr_blocksize = std::min(curr_blocksize, max_blocksize);
@@ -124,6 +126,7 @@ private:
     std::vector<double> randblock;
 
     ULONG table_lg, table_size, max_blocksize;
+    const ULONG max_bs_param, dummy;
     ULONG *offset;
 };
 

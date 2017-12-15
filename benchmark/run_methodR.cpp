@@ -51,7 +51,7 @@ int main(int argn, char **argv) {
         // samples_taken = 0;
 
         // Compute sample
-        HashSampling<> hs(config.seed + iteration, config.k);
+        HashSampling hs(config.seed + iteration, config.k);
         SeqDivideSampling<> sds(hs, config.k, config.seed + iteration, config.use_binom);
         sds.sample(config.N,
                    config.n,
@@ -72,7 +72,7 @@ int main(int argn, char **argv) {
         t.reset();
 
         // Compute sample
-        HashSampling<> hs(config.seed + iteration, config.k);
+        HashSampling hs(config.seed + iteration, config.k);
         SeqDivideSampling<> sds(hs, config.k, config.seed + iteration, config.use_binom);
         sds.sample(config.N,
                    config.n,

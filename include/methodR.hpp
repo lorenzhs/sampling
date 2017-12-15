@@ -18,7 +18,7 @@
 
 namespace sampling {
 
-template <typename BaseSampler = HashSampling<>>
+template <typename BaseSampler = HashSampling>
 class SeqDivideSampling {
 public:
     typedef BaseSampler base_type;

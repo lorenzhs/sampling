@@ -199,16 +199,16 @@ struct method_B {
         // Only use for k up to 4MM, it gets slow after that
         if (sorted && k < (1<<22)) {
             // SORTED hash sampling
-            SortedHashSampling<> hs((ULONG)seed, to_remove);
-            SeqDivideSampling<SortedHashSampling<>> s(
+            SortedHashSampling hs((ULONG)seed, to_remove);
+            SeqDivideSampling<SortedHashSampling> s(
                 hs, basecase, (ULONG)seed);
             // end - begin - 1 because the range is inclusive
             s.sample(end-begin-1, to_remove, [&](auto pos) {
                     holes[hole_idx++] = pos;
                 });
         } else {
-            HashSampling<> hs((ULONG)seed, to_remove);
-            SeqDivideSampling<> s(hs, basecase, (ULONG)seed);
+            HashSampling hs((ULONG)seed, to_remove);
+            SeqDivideSampling<HashSampling> s(hs, basecase, (ULONG)seed);
             // end - begin - 1 because the range is inclusive
             s.sample(end-begin-1, to_remove, [&](auto pos) {
                     holes[hole_idx++] = pos;
