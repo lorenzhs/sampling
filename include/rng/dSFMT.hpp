@@ -436,7 +436,7 @@ public:
                 block_size_ *= 2;
             }
             block_size_ = std::max(block_size_,
-                                   (size_t)_dSFMT::dsfmt_get_min_array_size());
+                                   minimum_reasonable_block_size());
             // generate_block takes care of resizing the vector for us
             generate_block(randblock_, block_size_);
             index_ = 0;
@@ -449,7 +449,7 @@ public:
     template <typename int_t>
     TLX_ATTRIBUTE_ALWAYS_INLINE
     int_t next_int(int_t min, int_t max) {
-        return next() * (max - min) + min;
+        return next() * (max - min + 1) + min;
     }
 
 
