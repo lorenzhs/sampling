@@ -7,14 +7,16 @@
  ******************************************************************************/
 
 #pragma once
-#ifndef METHOD_D_HEADER
-#define METHOD_D_HEADER
+#ifndef METHOD_B_HEADER
+#define METHOD_B_HEADER
 
+#include "config.hpp"
 #include "methodR.hpp"
 #include "methodH.hpp"
 #include "methodSH.hpp"
 #include "timer.hpp"
 #include "benchmark.hpp"
+#include "rng/dSFMT.hpp"
 
 #include <tlx/logger.hpp>
 
@@ -36,7 +38,101 @@ struct global_stats {
     statistics s_sum, s_gen, s_prefsum, s_fix;
 };
 
-struct method_B {
+template <typename Generator = rng::dSFMT>
+class method_B {
+public:
+    using generator_t = Generator;
+
+    method_B(size_t seed) : rng(seed) {}
+
+    /**
+     * @param dest output iterator
+     * @param size size of array (last valid pos is dest + size - 1)
+     * @param k number of samples to draw
+     * @param universe value range of samples [0..universe)
+     */
+    template <typename int_t>
+    auto sample(std::vector<int_t> &output, size_t k, size_t universe,
+                global_stats *stats = nullptr, const bool verbose = false,
+                unsigned int seed = 0)
+    {
+        double p; size_t ssize;
+        std::tie(p, ssize) = calc_params(universe, k);
+        output.resize(ssize);
+
+        auto pos = output.begin(), dest = output.begin();
+        double t_gen(0.0), t_pref(0.0), t_fix(0.0);
+        size_t its = 0; // how many iterations it took
+        timer t, t_total;
+        size_t usable_samples = 0;
+
+        do {
+            t.reset();
+            rng.generate_geometric_block(p, output, ssize);
+            // ensure a new seed is used in every iteration
+            // (0 = generate a random seed)
+            if (seed != 0) seed++;
+            t_gen += t.get_and_reset();
+
+            inplace_prefix_sum_disp<true>(dest, dest+ssize);
+            t_pref += t.get_and_reset();
+
+            // find out how many samples are within the universe.
+            // pos is the first one that's too large.
+            pos = std::lower_bound(dest, dest+ssize, universe);
+            usable_samples = pos - dest;
+
+            ++its;
+            LOGC(verbose) << "\tIt " << its << ": got " << usable_samples
+                          << " samples in range (" << k << " of " << ssize
+                          << " required) => "
+                          << (long long)usable_samples - (long long)k
+                          << " to delete, "  << ssize - usable_samples
+                          << " outside universe ignored (largest: "
+                          << *(dest + ssize - 1) << ")";
+        } while (pos == (dest + ssize) || usable_samples < k);
+        // first condition is that the whole universe is covered (i.e. ssize was
+        // big enough) and second condition is that >= k samples lie within it
+
+        t.reset();
+        if (usable_samples > k) {
+            // pick k out of the pos-dest-1 elements
+#ifdef FIX_STABLE
+            pos = fix_stable(dest, pos, k, seed);
+#else
+            pos = fix(dest, pos, k, seed);
+#endif
+            // pos is now the past-the-end iterator of the sample indices
+            assert(pos - dest == (long)k);
+        }
+        t_fix += t.get_and_reset();
+
+        double t_sum = t_total.get();
+        if (stats != nullptr) {
+            stats->push_sum(t_sum);
+            stats->push_gen(t_gen);
+            stats->push_prefsum(t_pref);
+            stats->push_fix(t_fix);
+        }
+
+        std::stringstream stream;
+        stream << "INFO"
+               << " time=" << t_sum
+               << " k=" << k
+               << " b=" << ssize
+               << " restarts=" << its-1
+               << " t_gen=" << t_gen
+               << " t_prefsum=" << t_pref
+               << " t_fix=" << t_fix
+#ifdef FIX_STABLE
+               << " fixer=stable";
+#else
+               << " fixer=fast";
+#endif
+        return stream.str();
+    }
+private:
+
     // Formulas from "Sequential Random Sampling" by Ahrens and Dieter, 1985
     static auto calc_params(size_t universe, size_t k /* samples */) {
         double r = sqrt(k);
@@ -64,7 +160,7 @@ struct method_B {
         }
     }
 
-
+#ifdef SAMPLING_HAVE_SSE2
     // Based on http://stackoverflow.com/a/32501562/3793885 by Peter Cordes
     // In-place prefix sum, optionally incrementing the sum between elements
     // (required for MKL geometric distribution...)
@@ -124,13 +220,17 @@ struct method_B {
               typename value_type = typename std::iterator_traits<It>::value_type>
     static typename std::enable_if_t<std::is_same<value_type, int>::value>
     inplace_prefix_sum_disp(It begin, It end) {
-        inplace_prefix_sum_sse<addone>(begin, end-begin);
+        // &(*begin) so that it works with iterators, eww
+        inplace_prefix_sum_sse<addone>(&(*begin), end-begin);
     }
+
+#endif // SAMPLING_HAVE_SSE2
 
     // Fallback to non-vectorized implementation
     template <bool addone, typename It,
               typename value_type = typename std::iterator_traits<It>::value_type>
-    static typename std::enable_if_t<!std::is_same<value_type, int>::value>
+    static typename std::enable_if_t<!SAMPLING_SSE2 ||
+                                     !std::is_same<value_type, int>::value>
     inplace_prefix_sum_disp(It begin, It end) {
         inplace_prefix_sum<addone>(begin, end);
     }
@@ -200,7 +300,7 @@ struct method_B {
         if (sorted && k < (1<<22)) {
             // SORTED hash sampling
             SortedHashSampling<> hs((ULONG)seed, to_remove);
-            SeqDivideSampling<SortedHashSampling<>> s(
+            SeqDivideSampling<decltype(hs)> s(
                 hs, basecase, (ULONG)seed);
             // end - begin - 1 because the range is inclusive
             s.sample(end-begin-1, to_remove, [&](auto pos) {
@@ -208,7 +308,7 @@ struct method_B {
                 });
         } else {
             HashSampling<> hs((ULONG)seed, to_remove);
-            SeqDivideSampling<HashSampling<>> s(hs, basecase, (ULONG)seed);
+            SeqDivideSampling<decltype(hs)> s(hs, basecase, (ULONG)seed);
             // end - begin - 1 because the range is inclusive
             s.sample(end-begin-1, to_remove, [&](auto pos) {
                     holes[hole_idx++] = pos;
@@ -258,91 +358,10 @@ struct method_B {
         return last + 1;
     }
 
-    /**
-     * @param dest output iterator
-     * @param size size of array (last valid pos is dest + size - 1)
-     * @param k number of samples to draw
-     * @param universe value range of samples [0..universe)
-     */
-    template <typename It, typename F, typename G>
-    static auto sample(It dest, size_t ssize, size_t k, double p,
-                       size_t universe, F&& gen_block, G&& prefsum,
-                       global_stats *stats = nullptr,
-                       const bool verbose = false, unsigned int seed = 0)
-    {
-        It pos;
-        double t_gen(0.0), t_pref(0.0), t_fix(0.0);
-        size_t its = 0; // how many iterations it took
-        timer t, t_total;
-        size_t usable_samples = 0;
 
-        do {
-            t.reset();
-            gen_block(dest, dest+ssize, p, seed);
-            // ensure a new seed is used in every iteration
-            // (0 = generate a random seed)
-            if (seed != 0) seed++;
-            t_gen += t.get_and_reset();
-
-            prefsum(dest, dest+ssize);
-            t_pref += t.get_and_reset();
-
-            // find out how many samples are within the universe.
-            // pos is the first one that's too large.
-            pos = std::lower_bound(dest, dest+ssize, universe);
-            usable_samples = pos - dest;
-
-            ++its;
-            LOGC(verbose) << "\tIt " << its << ": got " << usable_samples
-                          << " samples in range (" << k << " of " << ssize
-                          << " required) => "
-                          << (long long)usable_samples - (long long)k
-                          << " to delete, "  << ssize - usable_samples
-                          << " outside universe ignored (largest: "
-                          << *(dest + ssize - 1) << ")" << std::endl;
-        } while (pos == (dest + ssize) || usable_samples < k);
-        // first condition is that the whole universe is covered (i.e. ssize was
-        // big enough) and second condition is that >= k samples lie within it
-
-        t.reset();
-        if (usable_samples > k) {
-            // pick k out of the pos-dest-1 elements
-#ifdef FIX_STABLE
-            pos = fix_stable(dest, pos, k, seed);
-#else
-            pos = fix(dest, pos, k, seed);
-#endif
-            // pos is now the past-the-end iterator of the sample indices
-            assert(pos - dest == (long)k);
-        }
-        t_fix += t.get_and_reset();
-
-        double t_sum = t_total.get();
-        if (stats != nullptr) {
-            stats->push_sum(t_sum);
-            stats->push_gen(t_gen);
-            stats->push_prefsum(t_pref);
-            stats->push_fix(t_fix);
-        }
-
-        std::stringstream stream;
-        stream << "INFO"
-               << " time=" << t_sum
-               << " k=" << k
-               << " b=" << ssize
-               << " restarts=" << its-1
-               << " t_gen=" << t_gen
-               << " t_prefsum=" << t_pref
-               << " t_fix=" << t_fix
-#ifdef FIX_STABLE
-               << " fixer=stable";
-#else
-               << " fixer=fast";
-#endif
-        return stream.str();
-    }
+    generator_t rng;
 };
 
 } // namespace sampling
 
-#endif // METHOD_D_HEADER
+#endif // METHOD_B_HEADER

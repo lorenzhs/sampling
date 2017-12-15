@@ -13,6 +13,13 @@
 
 namespace sampling {
 
+#if defined(__SSE2__)
+#define SAMPLING_HAVE_SSE2
+#define SAMPLING_SSE2 true
+#else
+#define SAMPLING_SSE2 false
+#endif
+
 // MSVC doesn't define __SSE4_2__, so also check for __AVX__ // NOLINT
 #if defined(__SSE4_2__) || defined(__AVX__)
 #define SAMPLING_HAVE_SSE4_2
