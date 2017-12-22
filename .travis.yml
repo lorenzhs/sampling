@@ -88,3 +88,6 @@ before_script:
 
 script:
   - ctest
+      -DCTEST_SITE:STRING="travis-$TRAVIS_REPO_SLUG"
+      -DCTEST_BUILD_NAME:STRING="$TRAVIS_OS_NAME-$CMAKE_CC-$BUILD_TYPE"
+      -S ../cmake/script.ctest -VV
