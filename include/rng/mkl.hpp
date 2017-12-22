@@ -10,6 +10,8 @@
 #ifndef RNG_MKL_HEADER
 #define RNG_MKL_HEADER
 
+#ifdef SAMPLING_HAVE_MKL
+
 #include <tlx/logger.hpp>
 
 #include <mkl.h>
@@ -151,5 +153,7 @@ private:
 
 } // namespace rng
 } // namespace sampling
+
+#endif // SAMPLING_HAVE_MKL
 
 #endif // RNG_MKL_HEADER
