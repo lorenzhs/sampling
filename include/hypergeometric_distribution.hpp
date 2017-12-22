@@ -102,7 +102,7 @@ private:
      */
     fp_t loggam(fp_t x) const {
         fp_t x0, x2, xp, gl, gl0;
-        std::make_signed_t<int_t> k, n;
+        typename std::make_signed<int_t>::type k, n;
 
         static fp_t a[10] = {8.333333333333333e-02,-2.777777777777778e-03,
                              7.936507936507937e-04,-5.952380952380952e-04,

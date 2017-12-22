@@ -52,7 +52,7 @@ public:
      * @param universe value range of samples [0..universe)
      */
     template <typename int_t>
-    auto sample(std::vector<int_t> &output, size_t k, size_t universe,
+    void sample(std::vector<int_t> &output, size_t k, size_t universe,
                 global_stats *stats = nullptr, const bool verbose = false)
     {
         double p; size_t ssize;
@@ -111,6 +111,8 @@ public:
             stats->push_fix(t_fix);
         }
 
+        /*
+        // Disabled: return timings as log string
         std::stringstream stream;
         stream << "INFO"
                << " time=" << t_sum
@@ -126,11 +128,13 @@ public:
                << " fixer=fast";
 #endif
         return stream.str();
+        */
     }
 private:
 
     // Formulas from "Sequential Random Sampling" by Ahrens and Dieter, 1985
-    static auto calc_params(size_t universe, size_t k /* samples */) {
+    static std::pair<double, size_t>
+    calc_params(size_t universe, size_t k /* samples */) {
         double r = sqrt(k);
         double a = sqrt(log(1+k/(2*M_PI)));
         a = a + a*a/(3.0 * r);
@@ -214,7 +218,7 @@ private:
     // Dispatch prefix sum to vectorized implementation if possible
     template <bool addone, typename It,
               typename value_type = typename std::iterator_traits<It>::value_type>
-    static typename std::enable_if_t<std::is_same<value_type, int>::value>
+    static typename std::enable_if<std::is_same<value_type, int>::value>::type
     inplace_prefix_sum_disp(It begin, It end) {
         // &(*begin) so that it works with iterators, eww
         inplace_prefix_sum_sse<addone>(&(*begin), end-begin);
@@ -225,8 +229,8 @@ private:
     // Fallback to non-vectorized implementation
     template <bool addone, typename It,
               typename value_type = typename std::iterator_traits<It>::value_type>
-    static typename std::enable_if_t<!SAMPLING_SSE2 ||
-                                     !std::is_same<value_type, int>::value>
+    static typename std::enable_if<!SAMPLING_SSE2 ||
+                                   !std::is_same<value_type, int>::value>::type
     inplace_prefix_sum_disp(It begin, It end) {
         inplace_prefix_sum<addone>(begin, end);
     }
@@ -279,11 +283,13 @@ private:
     // Sampling without replacement to pick position of holes.  Optimized for
     // this scenario, not general purpose.
     template <typename It>
-    auto pick_holes(It begin, It end, size_t k, bool sorted) {
+    std::unique_ptr<size_t[]>
+    pick_holes(It begin, It end, size_t k, bool sorted) {
         assert(end - begin > (long)k);
         const size_t to_remove = (end-begin) - k;
 
-        auto holes = std::make_unique<int64_t[]>(to_remove + 1);
+        // C++11 lacks std::make_unique :(
+        std::unique_ptr<size_t[]> holes(new size_t[to_remove + 1]());
         holes[to_remove] = (end-begin);
         size_t hole_idx = 0;
 
@@ -295,14 +301,14 @@ private:
             SeqDivideSampling<decltype(hs)> s(
                 hs, basecase, (ULONG)seed);
             // end - begin - 1 because the range is inclusive
-            s.sample(end-begin-1, to_remove, [&](auto pos) {
+            s.sample(end-begin-1, to_remove, [&](size_t pos) {
                     holes[hole_idx++] = pos;
                 });
         } else {
             HashSampling<> hs((ULONG)++seed, to_remove);
             SeqDivideSampling<decltype(hs)> s(hs, basecase, (ULONG)seed);
             // end - begin - 1 because the range is inclusive
-            s.sample(end-begin-1, to_remove, [&](auto pos) {
+            s.sample(end-begin-1, to_remove, [&](size_t pos) {
                     holes[hole_idx++] = pos;
                 });
             if (sorted)
@@ -318,7 +324,7 @@ private:
     }
 
     template <typename It>
-    auto fix_stable(It begin, It end, size_t k) {
+    It fix_stable(It begin, It end, size_t k) {
         assert(end - begin > (long)k);
 
         // Get holes (sorted), then apply memmove compactor
@@ -330,7 +336,7 @@ private:
 
 
     template <typename It>
-    auto fix(It begin, It end, size_t k) {
+    It fix(It begin, It end, size_t k) {
         assert(end-begin > (long)k);
         size_t to_remove = (end-begin) - k;
 
