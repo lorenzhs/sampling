@@ -1,5 +1,5 @@
 /*******************************************************************************
- * include/sampling_config.hpp
+ * sampling/sampling_config.hpp
  *
  * Copyright (C) 2016-2017 Sebastian Lamm <lamm@ira.uka.de>
  * Copyright (C) 2017 Lorenz Hübschle-Schneider <lorenz@4z2.de>
@@ -7,8 +7,8 @@
  * All rights reserved. Published under the BSD-2 license in the LICENSE file.
  ******************************************************************************/
 
-#ifndef SAMPLING_CONFIG_HEADER
-#define SAMPLING_CONFIG_HEADER
+#ifndef SAMPLING_SAMPLING_CONFIG_HEADER
+#define SAMPLING_SAMPLING_CONFIG_HEADER
 
 #include "definitions.hpp"
 
@@ -45,4 +45,4 @@ struct SamplingConfig {
 
 } // namespace sampling
 
-#endif // SAMPLING_CONFIG_HEADER
+#endif // SAMPLING_SAMPLING_CONFIG_HEADER

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * include/rng/stl.hpp
+ * sampling/rng/stl.hpp
  *
  * Copyright (C) 2017 Lorenz Hübschle-Schneider <lorenz@4z2.de>
  *
@@ -7,8 +7,8 @@
  ******************************************************************************/
 
 #pragma once
-#ifndef RNG_SELECT_HEADER
-#define RNG_SELECT_HEADER
+#ifndef SAMPLING_RNG_SELECT_HEADER
+#define SAMPLING_RNG_SELECT_HEADER
 
 #include "../config.hpp"
 
@@ -38,4 +38,4 @@ using select_t = select::type;
 } // namespace rng
 } // namespace sampling
 
-#endif // RNG_SELECT_HEADER
+#endif // SAMPLING_RNG_SELECT_HEADER

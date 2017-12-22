@@ -1,5 +1,5 @@
 /*******************************************************************************
- * include/benchmark.hpp
+ * sampling/benchmark.hpp
  *
  * Copyright (C) 2016-2017 Lorenz Hübschle-Schneider <lorenz@4z2.de>
  *
@@ -7,8 +7,8 @@
  ******************************************************************************/
 
 #pragma once
-#ifndef BENCHMARK_HEADER
-#define BENCHMARK_HEADER
+#ifndef SAMPLING_BENCHMARK_HEADER
+#define SAMPLING_BENCHMARK_HEADER
 
 #include <cmath>
 
@@ -58,4 +58,4 @@ struct statistics {
 
 }
 
-#endif // BENCHMARK_HEADER
+#endif // SAMPLING_BENCHMARK_HEADER

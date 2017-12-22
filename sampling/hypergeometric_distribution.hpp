@@ -1,5 +1,5 @@
 /*******************************************************************************
- * include/hypergeometric_distribution.hpp
+ * sampling/hypergeometric_distribution.hpp
  *
  * A hypergeomitric distribution random generator adapted from NumPy.
  *
@@ -236,6 +236,6 @@ using hypergeometric = hypergeometric_distribution<>;
 
 } // namespace sampling
 
-#endif // !SAMPLINGHYPERGEOMETRIC_DISTRIBUTION_HEADER
+#endif // SAMPLING_HYPERGEOMETRIC_DISTRIBUTION_HEADER
 
 /******************************************************************************/

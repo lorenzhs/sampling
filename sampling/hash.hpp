@@ -1,5 +1,5 @@
 /*******************************************************************************
- * include/hash.hpp
+ * sampling/hash.hpp
  *
  * Copyright (C) 2016-2017 Sebastian Lamm <lamm@ira.uka.de>
  * Copyright (C) 2017 Lorenz Hübschle-Schneider <lorenz@4z2.de>
@@ -7,8 +7,8 @@
  * All rights reserved. Published under the BSD-2 license in the LICENSE file.
  ******************************************************************************/
 
-#ifndef CRC_HASH_HEADER
-#define CRC_HASH_HEADER
+#ifndef SAMPLING_HASH_HEADER
+#define SAMPLING_HASH_HEADER
 
 #include "config.hpp"
 #include "definitions.hpp"
@@ -182,4 +182,4 @@ public:
 
 } // namespace sampling
 
-#endif // CRC_HASH_HEADER
+#endif // SAMPLING_HASH_HEADER

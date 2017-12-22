@@ -1,5 +1,5 @@
 /*******************************************************************************
- * include/methodB.hpp
+ * sampling/methodB.hpp
  *
  * Copyright (C) 2016-2017 Lorenz Hübschle-Schneider <lorenz@4z2.de>
  *
@@ -7,8 +7,8 @@
  ******************************************************************************/
 
 #pragma once
-#ifndef METHOD_B_HEADER
-#define METHOD_B_HEADER
+#ifndef SAMPLING_METHOD_B_HEADER
+#define SAMPLING_METHOD_B_HEADER
 
 #include "config.hpp"
 #include "methodR.hpp"
@@ -363,4 +363,4 @@ private:
 
 } // namespace sampling
 
-#endif // METHOD_B_HEADER
+#endif // SAMPLING_METHOD_B_HEADER

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * include/config.hpp
+ * sampling/config.hpp
  *
  * Copyright (C) 2016-2017 Sebastian Lamm <lamm@ira.uka.de>
  * Copyright (C) 2017 Lorenz Hübschle-Schneider <lorenz@4z2.de>
@@ -8,8 +8,8 @@
  ******************************************************************************/
 
 #pragma once
-#ifndef DEFINITIONS_HEADER
-#define DEFINITIONS_HEADER
+#ifndef SAMPLING_DEFINITIONS_HEADER
+#define SAMPLING_DEFINITIONS_HEADER
 
 namespace sampling {
 
@@ -31,4 +31,4 @@ const PEID ROOT = 0;
 
 } // namespace sampling
 
-#endif // DEFINITIONS_HEADER
+#endif // SAMPLING_DEFINITIONS_HEADER

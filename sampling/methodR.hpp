@@ -1,5 +1,5 @@
 /*******************************************************************************
- * include/methodR.hpp
+ * sampling/methodR.hpp
  *
  * Copyright (C) 2016-2017 Sebastian Lamm <lamm@ira.uka.de>
  * Copyright (C) 2017 Lorenz Hübschle-Schneider <lorenz@4z2.de>
@@ -8,8 +8,8 @@
  ******************************************************************************/
 
 #pragma once
-#ifndef METHOD_R_HEADER
-#define METHOD_R_HEADER
+#ifndef SAMPLING_METHOD_R_HEADER
+#define SAMPLING_METHOD_R_HEADER
 
 #include "definitions.hpp"
 #include "hypergeometric_distribution.hpp"
@@ -62,4 +62,4 @@ private:
 
 }
 
-#endif // METHOD_R_HEADER
+#endif // SAMPLING_METHOD_R_HEADER

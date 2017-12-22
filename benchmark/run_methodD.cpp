@@ -10,10 +10,10 @@
 #include "arg_parser.hpp"
 #include "parse_parameters.hpp"
 
-#include <include/timer.hpp>
-#include <include/sampling_config.hpp>
-#include <include/methodD.hpp>
-#include <include/benchmark.hpp>
+#include <sampling/timer.hpp>
+#include <sampling/sampling_config.hpp>
+#include <sampling/methodD.hpp>
+#include <sampling/benchmark.hpp>
 
 #include <iostream>
 #include <vector>

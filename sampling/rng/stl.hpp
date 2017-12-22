@@ -1,5 +1,5 @@
 /*******************************************************************************
- * include/rng/stl.hpp
+ * sampling/rng/stl.hpp
  *
  * Copyright (C) 2017 Lorenz Hübschle-Schneider <lorenz@4z2.de>
  *
@@ -7,8 +7,8 @@
  ******************************************************************************/
 
 #pragma once
-#ifndef RAND_STL_HEADER
-#define RAND_STL_HEADER
+#ifndef SAMPLING_RAND_STL_HEADER
+#define SAMPLING_RAND_STL_HEADER
 
 #include <random>
 
@@ -105,4 +105,4 @@ private:
 } // namespace rng
 } // namespace sampling
 
-#endif // RAND_STL_HEADER
+#endif // SAMPLING_RAND_STL_HEADER

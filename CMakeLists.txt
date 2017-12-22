@@ -292,7 +292,7 @@ endif()
 add_subdirectory(extlib/spooky)
 
 # descend into library source
-add_subdirectory(include)
+add_subdirectory(sampling)
 
 # descend into benchmark suite
 add_subdirectory(benchmark)

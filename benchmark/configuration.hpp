@@ -11,7 +11,7 @@
 #ifndef CONFIGURATION_HEADER
 #define CONFIGURATION_HEADER
 
-#include <include/sampling_config.hpp>
+#include <sampling/sampling_config.hpp>
 
 namespace sampling {
 

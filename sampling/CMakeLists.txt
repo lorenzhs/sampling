@@ -1,5 +1,5 @@
 ################################################################################
-# include/CMakeLists.txt
+# sampling/CMakeLists.txt
 #
 # CMake file for sampling library
 #

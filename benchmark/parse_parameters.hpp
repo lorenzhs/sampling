@@ -13,7 +13,7 @@
 #include "arg_parser.hpp"
 #include "configuration.hpp"
 
-#include <include/sampling_config.hpp>
+#include <sampling/sampling_config.hpp>
 
 #include <cmath>
 #include <cstring>

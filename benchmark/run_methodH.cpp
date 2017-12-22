@@ -10,12 +10,12 @@
 #include "arg_parser.hpp"
 #include "parse_parameters.hpp"
 
-#include <include/benchmark.hpp>
-#include <include/methodB.hpp>
-#include <include/methodH.hpp>
-#include <include/sampling_config.hpp>
-#include <include/timer.hpp>
-#include <include/rng/mkl.hpp>
+#include <sampling/benchmark.hpp>
+#include <sampling/methodB.hpp>
+#include <sampling/methodH.hpp>
+#include <sampling/sampling_config.hpp>
+#include <sampling/timer.hpp>
+#include <sampling/rng/mkl.hpp>
 
 #include <algorithm>
 #include <iostream>

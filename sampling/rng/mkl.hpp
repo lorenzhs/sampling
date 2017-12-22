@@ -1,5 +1,5 @@
 /*******************************************************************************
- * include/rng/mkl.hpp
+ * sampling/rng/mkl.hpp
  *
  * Copyright (C) 2017 Lorenz Hübschle-Schneider <lorenz@4z2.de>
  *
@@ -7,8 +7,8 @@
  ******************************************************************************/
 
 #pragma once
-#ifndef RNG_MKL_HEADER
-#define RNG_MKL_HEADER
+#ifndef SAMPLING_RNG_MKL_HEADER
+#define SAMPLING_RNG_MKL_HEADER
 
 #ifdef SAMPLING_HAVE_MKL
 
@@ -156,4 +156,4 @@ private:
 
 #endif // SAMPLING_HAVE_MKL
 
-#endif // RNG_MKL_HEADER
+#endif // SAMPLING_RNG_MKL_HEADER

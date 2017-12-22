@@ -1,5 +1,5 @@
 /*******************************************************************************
- * include/timer.hpp
+ * sampling/timer.hpp
  *
  * Copyright (C) 2016-2017 Lorenz Hübschle-Schneider <lorenz@4z2.de>
  *

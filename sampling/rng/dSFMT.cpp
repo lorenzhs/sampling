@@ -1,5 +1,5 @@
 /*******************************************************************************
- * include/rng/dSFMT.cpp
+ * sampling/rng/dSFMT.cpp
  *
  * A double-precision SIMD-oriented Fast Mersenne Twister
  *

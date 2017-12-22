@@ -1,5 +1,5 @@
 /*******************************************************************************
- * include/methodH.hpp
+ * sampling/methodH.hpp
  *
  * Copyright (C) 2016-2017 Sebastian Lamm <lamm@ira.uka.de>
  * Copyright (C) 2017 Lorenz Hübschle-Schneider <lorenz@4z2.de>
@@ -8,8 +8,8 @@
  ******************************************************************************/
 
 #pragma once
-#ifndef METHOD_H_HEADER
-#define METHOD_H_HEADER
+#ifndef SAMPLING_METHOD_H_HEADER
+#define SAMPLING_METHOD_H_HEADER
 
 #include "definitions.hpp"
 #include "rng/select.hpp"
@@ -132,4 +132,4 @@ private:
 
 } // namespace sampling
 
-#endif // METHOD_H_HEADER
+#endif // SAMPLING_METHOD_H_HEADER

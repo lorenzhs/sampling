@@ -1,5 +1,5 @@
 /*******************************************************************************
- * include/config.hpp
+ * sampling/config.hpp
  *
  * Copyright (C) 2016-2017 Sebastian Lamm <lamm@ira.uka.de>
  * Copyright (C) 2017 Lorenz Hübschle-Schneider <lorenz@4z2.de>
@@ -8,8 +8,8 @@
  ******************************************************************************/
 
 #pragma once
-#ifndef CONFIG_HEADER
-#define CONFIG_HEADER
+#ifndef SAMPLING_CONFIG_HEADER
+#define SAMPLING_CONFIG_HEADER
 
 namespace sampling {
 
@@ -37,4 +37,4 @@ namespace sampling {
 
 } // namespace sampling
 
-#endif // CONFIG_HEADER
+#endif // SAMPLING_CONFIG_HEADER
