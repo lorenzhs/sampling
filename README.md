@@ -22,5 +22,10 @@ If you use this library in the context of an academic publication, we ask that y
   publisher = {ACM}
 }
 ```
+### Building
+
+Build with cmake (version 2.8.12 or later is required). Remember to fetch the submodules before compiling: `git submodule update --init`. A compiler compatible with C++11 is required.
+
+**Dependencies:** An MPI library (for Algorithm P), and *optionally* Intel Math Kernel Library (MKL) for faster random variate generation
 
 **[License](/LICENSE):** 2-clause BSD
