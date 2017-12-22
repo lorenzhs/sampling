@@ -28,9 +28,9 @@ namespace sampling {
 // 64 or 32 bit environment?
 #if __GNUC__
   #if __x86_64__ || __ppc64__
-    #define ENV64BIT
+    #define SAMPLING_ENV64BIT
   #else
-    #define ENV32BIT
+    #define SAMPLING_ENV32BIT
   #endif
 #endif
 

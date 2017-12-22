@@ -153,8 +153,8 @@ using CRCHash = HashCrc32Fallback<ULONG>;
 class CityHash {
 public:
     static ULONG hash(ULONG x) {
-#ifdef ENV64BIT
-        ULONG hash = CityHash64WithSeed(&x, 8, SEEDA);
+#ifdef SAMPLING_ENV64BIT
+        ULONG hash = CityHash64WithSeed(&x, 8, SAMPLING_SEEDA);
 #else
         ULONG hash = CityHash32(&x, 8);
 #endif
@@ -170,10 +170,10 @@ public:
 class Spooky {
 public:
     static ULONG hash(ULONG x) {
-#ifdef ENV64BIT
-        ULONG hash = SpookyHash::Hash64(&x, 8, SEEDA);
+#ifdef SAMPLING_ENV64BIT
+        ULONG hash = SpookyHash::Hash64(&x, 8, SAMPLING_SEEDA);
 #else
-        ULONG hash = SpookyHash::Hash32(&x, 4, SEEDA);
+        ULONG hash = SpookyHash::Hash32(&x, 4, SAMPLING_SEEDA);
 #endif
         return hash;
     };

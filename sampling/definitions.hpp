@@ -26,8 +26,8 @@ typedef int PEID;
 
 const PEID ROOT = 0;
 
-#define SEEDA 28475421
-#define SEEDB 52150599
+#define SAMPLING_SEEDA 28475421
+// #define SAMPLING_SEEDB 52150599
 
 } // namespace sampling
 
