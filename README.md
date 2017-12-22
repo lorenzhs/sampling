@@ -28,4 +28,10 @@ Build with cmake (version 2.8.12 or later is required). Remember to fetch the su
 
 **Optional Dependencies:** An MPI library for Algorithm P's test runner (Algorithm P itself is implemented independently of MPI), Intel Math Kernel Library (MKL) for faster random variate generation
 
+### Tests
+
+To run the tests, set the cmake variable `SAMPLING_BUILD_TESTS` to `ON`.  Make sure that the `extlib/googletest` submodule is present.  Build, then execute the tests with `ctest`.
+
+We plan to make the test suite more comprehensive in the future.
+
 **[License](/LICENSE):** 2-clause BSD

@@ -3,6 +3,7 @@
 #
 # Root CMake build script for sampler
 #
+# Copyright (C) 2015-2017 Timo Bingmann <tb@panthema.net>
 # Copyright (C) 2017 Lorenz Hübschle-Schneider <lorenz@4z2.de>
 #
 # All rights reserved. Published under the BSD-2 license in the LICENSE file.
@@ -33,6 +34,8 @@ option(SAMPLING_USE_LTO
 
 option(SAMPLING_USE_MKL
   "Build with Intel MKL random generator if available." ON)
+
+option(SAMPLING_BUILD_TESTS "Build libsampling's tests." OFF)
 
 
 ################################################################################
@@ -224,6 +227,28 @@ macro(set_join var)
   string(STRIP ${var} "${${var}}")
 endmacro(set_join)
 
+###############################################################################
+# enable gtest framework, valgrind, and collection of results
+
+enable_testing()
+include(CTest)
+
+### google test + mock - enable "make test" and add_test()
+
+# this fixes compilation with static libs on MSVC
+set(gtest_force_shared_crt ON CACHE BOOL "on" FORCE)
+if(NOT MSVC)
+  # silence some warnings
+  set(GTEST_SAVE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-missing-field-initializers -Wno-deprecated")
+endif()
+
+add_subdirectory(extlib/googletest/googletest)
+
+if(NOT MSVC)
+  set(CMAKE_CXX_FLAGS "${GTEST_SAVE_CXX_FLAGS}")
+endif()
+
 ################################################################################
 
 # use tlx
@@ -296,5 +321,9 @@ add_subdirectory(sampling)
 
 # descend into benchmark suite
 add_subdirectory(benchmark)
+
+if(SAMPLING_BUILD_TESTS)
+  add_subdirectory(tests)
+endif()
 
 ################################################################################
