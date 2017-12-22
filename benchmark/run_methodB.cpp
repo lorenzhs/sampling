@@ -68,7 +68,7 @@ int main(int argn, char **argv) {
         stats.push(t.get());
     }
 
-    std::cout << "RESULT runner=H"
+    std::cout << "RESULT runner=B"
               << " time=" << stats.avg()
               << " stddev=" << stats.stddev()
               << " iterations=" << config.iterations
