@@ -1,4 +1,4 @@
-## Efficient Random Sampling
+## Efficient Random Sampling  [![Travis-CI Status](https://travis-ci.org/lorenzhs/sampling.svg?branch=master)](https://travis-ci.org/lorenzhs/sampling)
 #### Parallel, Vectorized, Cache-Efficient, and Online
 
 This is the code to accompany our eponymous paper: *Sanders, P., Lamm, S., Hübschle-Schneider, L., Schrade, E. and Dachsbacher, C., 2017. Efficient Random Sampling-Parallel, Vectorized, Cache-Efficient, and Online. ACM Transactions on Mathematical Software (TOMS), 44.3 (2017): 29.*
