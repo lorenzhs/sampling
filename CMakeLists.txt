@@ -232,8 +232,12 @@ add_subdirectory(extlib/tlx)
 set(SAMPLING_LINK_LIBRARIES tlx ${SAMPLING_LINK_LIBRARIES})
 
 # find MPI
-find_package(MPI REQUIRED)
-include_directories(${MPI_INCLUDE_PATH})
+find_package(MPI)
+if(MPI_FOUND)
+  include_directories(${MPI_INCLUDE_PATH})
+else()
+  message(STATUS "Could not find an MPI library")
+endif()
 
 # try to find MKL
 if(SAMPLING_USE_MKL)
@@ -257,22 +261,30 @@ macro(do_build TARGETNAME)
   target_link_libraries(${TARGETNAME} ${EXEC_LINK_LIBRARIES})
 endmacro(do_build)
 
-# macro for building main programs with correct libraries
-macro(mpi_build TARGETNAME)
-  add_executable(${TARGETNAME} ${ARGN})
-  target_link_libraries(${TARGETNAME} ${EXEC_LINK_LIBRARIES} ${MPI_LIBRARIES})
-endmacro(mpi_build)
-
-# macro for building a single-source thrill program
+# macro for building a single-source program
 macro(build_prog PROGNAME)
   string(REPLACE "/" "_" TARGETNAME "${PROGNAME}") # replace slashes
   do_build(${TARGETNAME} ${PROGNAME}.cpp ${ARGN})
 endmacro(build_prog)
 
-macro(build_mpi_prog PROGNAME)
-  string(REPLACE "/" "_" TARGETNAME "${PROGNAME}") # replace slashes
-  mpi_build(${TARGETNAME} ${PROGNAME}.cpp ${ARGN})
-endmacro(build_mpi_prog)
+# macro for building main programs with MPI
+if(MPI_FOUND)
+  macro(mpi_build TARGETNAME)
+    add_executable(${TARGETNAME} ${ARGN})
+    target_link_libraries(${TARGETNAME} ${EXEC_LINK_LIBRARIES} ${MPI_LIBRARIES})
+  endmacro(mpi_build)
+
+  macro(build_mpi_prog PROGNAME)
+    string(REPLACE "/" "_" TARGETNAME "${PROGNAME}") # replace slashes
+    mpi_build(${TARGETNAME} ${PROGNAME}.cpp ${ARGN})
+  endmacro(build_mpi_prog)
+else()
+  macro(mpi_build TARGETNAME)
+  endmacro(mpi_build)
+
+  macro(build_mpi_prog PROGRAMME)
+  endmacro(build_mpi_prog)
+endif()
 
 ################################################################################
 
