@@ -15,7 +15,7 @@
 namespace sampling {
 
 // template-based loop unrolling
-template <size_t N> struct faux_unroll {
+template <std::size_t N> struct faux_unroll {
     template <typename F> static void call(F &&f) {
         faux_unroll<N-1>::call(f);
         f(N-1);
@@ -32,7 +32,7 @@ struct statistics {
     // The Art of Computer Programming, Volume 2, Chapter 4.2.2, Equations 15&16
     double mean;
     double nvar; // approx n * variance; stddev = sqrt(nvar / (count-1))
-    size_t count;
+    std::size_t count;
 
     statistics() : mean(0.0), nvar(0.0), count(0) {}
 
@@ -50,7 +50,7 @@ struct statistics {
     double avg() {
         return mean;
     }
-    double stddev(size_t ddof = 1) {
+    double stddev(std::size_t ddof = 1) {
         if (count <= 1) return 0.0;
         // ddof = delta degrees of freedom
         // Set to 0 if you have the entire distribution
