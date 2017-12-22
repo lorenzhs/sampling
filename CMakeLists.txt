@@ -234,7 +234,7 @@ set(SAMPLING_LINK_LIBRARIES tlx ${SAMPLING_LINK_LIBRARIES})
 # find MPI
 find_package(MPI)
 if(MPI_FOUND)
-  include_directories(${MPI_INCLUDE_PATH})
+  include_directories(SYSTEM ${MPI_INCLUDE_PATH})
 else()
   message(STATUS "Could not find an MPI library")
 endif()

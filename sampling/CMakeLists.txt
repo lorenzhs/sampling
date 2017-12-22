@@ -26,7 +26,7 @@ add_library(sampling STATIC ${SAMPLING_SRCS})
 set_target_properties(sampling PROPERTIES LINKER_LANGUAGE CXX)
 target_compile_definitions(sampling PUBLIC ${SAMPLING_DEFINITIONS})
 target_include_directories(sampling PUBLIC ${PROJECT_SOURCE_DIR})
-target_include_directories(sampling PUBLIC ${PROJECT_SOURCE_DIR}/extlib/spooky)
+target_include_directories(sampling SYSTEM PUBLIC ${PROJECT_SOURCE_DIR}/extlib/spooky)
 target_include_directories(sampling SYSTEM PUBLIC ${SAMPLING_INCLUDE_DIRS})
 target_link_libraries(sampling ${SAMPLING_LINK_LIBRARIES})
 
