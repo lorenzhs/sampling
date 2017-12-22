@@ -251,6 +251,14 @@ endif()
 
 ################################################################################
 
+# find pthreads
+
+find_package(Threads REQUIRED)
+set(SAMPLING_LINK_LIBRARIES ${CMAKE_THREAD_LIBS_INIT} ${SAMPLING_LINK_LIBRARIES})
+if(CMAKE_USE_PTHREADS_INIT)
+  set(SAMPLING_LINK_LIBRARIES pthread ${SAMPLING_LINK_LIBRARIES})
+endif()
+
 # use tlx
 
 add_subdirectory(extlib/tlx)
