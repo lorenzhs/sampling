@@ -62,6 +62,14 @@
 #include <limits>
 #include <vector>
 
+
+#include <inttypes.h>
+#if defined(HAVE_ALTIVEC) && !defined(__APPLE__)
+#  include <altivec.h>
+#elif defined(SAMPLING_HAVE_SSE2)
+#  include <emmintrin.h>
+#endif
+
 namespace sampling {
 namespace rng {
 namespace _dSFMT {
@@ -112,7 +120,7 @@ extern "C" {
 #endif
 
 #if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
-#  include <inttypes.h>
+//#  include <inttypes.h>
 #elif defined(_MSC_VER) || defined(__BORLANDC__)
 #  if !defined(DSFMT_UINT32_DEFINED) && !defined(SFMT_UINT32_DEFINED)
 typedef unsigned int uint32_t;
@@ -126,7 +134,7 @@ typedef unsigned __int64 uint64_t;
 #    endif
 #  endif
 #else
-#  include <inttypes.h>
+//#  include <inttypes.h>
 #  if !defined(inline) && !defined(__cplusplus)
 #    if defined(__GNUC__)
 #      define inline __inline__
@@ -145,7 +153,7 @@ typedef unsigned __int64 uint64_t;
   ------------------------------------------*/
 #if defined(HAVE_ALTIVEC)
 #  if !defined(__APPLE__)
-#    include <altivec.h>
+//#    include <altivec.h>
 #  endif
 /** 128-bit data structure */
 union W128_T {
@@ -155,8 +163,8 @@ union W128_T {
     double d[2];
 };
 
-#elif defined(THRILL_HAVE_SSE2)
-#  include <emmintrin.h>
+#elif defined(SAMPLING_HAVE_SSE2)
+//#  include <emmintrin.h>
 
 /** 128-bit data structure */
 union W128_T {
@@ -207,7 +215,7 @@ inline static void dsfmt_init_gen_rand(dsfmt_t *dsfmt, uint32_t seed) {
 #define DSFMT_SR	12
 
 /* for sse2 */
-#if defined(THRILL_HAVE_SSE2)
+#if defined(SAMPLING_HAVE_SSE2)
   #define SSE2_SHUFF 0x1b
 #elif defined(HAVE_ALTIVEC)
   #if defined(__APPLE__)  /* For OSX */
@@ -269,8 +277,8 @@ inline static void dsfmt_init_gen_rand(dsfmt_t *dsfmt, uint32_t seed) {
  * inlined: dSFMT-common.h
  */
 
-#if defined(THRILL_HAVE_SSE2)
-#  include <emmintrin.h>
+#if defined(SAMPLING_HAVE_SSE2)
+//#  include <emmintrin.h>
 union X128I_T {
     uint64_t u[2];
     __m128i  i128;
@@ -312,7 +320,7 @@ inline static void do_recursion(w128_t *r, w128_t *a, w128_t * b,
     r->s = vec_xor(z, x);
     lung->s = w;
 }
-#elif defined(THRILL_HAVE_SSE2)
+#elif defined(SAMPLING_HAVE_SSE2)
 /**
  * This function represents the recursion formula.
  * @param r output 128-bit
