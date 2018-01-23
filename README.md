@@ -1,7 +1,7 @@
 ## Efficient Random Sampling
 #### Parallel, Vectorized, Cache-Efficient, and Online
 
-This is the code to accompany our eponymous paper: *Sanders, P., Lamm, S., Hübschle-Schneider, L., Schrade, E. and Dachsbacher, C., 2017. Efficient Random Sampling-Parallel, Vectorized, Cache-Efficient, and Online. ACM Transactions on Mathematical Software (TOMS), 44.3 (2017): 29.*
+This is the code to accompany our eponymous paper: *Sanders, P., Lamm, S., Hübschle-Schneider, L., Schrade, E. and Dachsbacher, C., 2017. Efficient Parallel Random Sampling—Vectorized, Cache-Efficient, and Online. ACM Transactions on Mathematical Software (TOMS), 44.3 (2017): 29.*
 
 You can find a freely accessible online version [in the arXiv](https://arxiv.org/abs/1610.05141).
 
@@ -11,7 +11,7 @@ we greatly encourage you to use the code in the [master branch](https://github.c
 If you use this library in the context of an academic publication, we ask that you cite our paper:
 ```bibtex
 @article{sanders2017sampling,
-  title = {Efficient Random Sampling-Parallel, Vectorized, Cache-Efficient, and Online},
+  title = {Efficient Parallel Random Sampling---Vectorized, Cache-Efficient, and Online},
   author = {Sanders, Peter and Lamm, Sebastian and H{\"u}bschle-Schneider, Lorenz
             and Schrade, Emanuel and Dachsbacher, Carsten},
   journal = {ACM Trans. Math. Softw.},
