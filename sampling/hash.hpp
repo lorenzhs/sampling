@@ -131,10 +131,14 @@ uint32_t crc32_slicing_by_8(uint32_t crc, const void* data, size_t length);
  */
 template <typename ValueType>
 struct HashCrc32Fallback {
-    uint32_t operator () (const ValueType& val, uint32_t crc = 0xffffffff) const {
+    const uint32_t hash(const ValueType& val, uint32_t crc = 0xffffffff) {
         const char* ptr = HashDataSwitch<ValueType>::ptr(val);
         size_t size = HashDataSwitch<ValueType>::size(val);
         return crc32_slicing_by_8(crc, ptr, size);
+    }
+
+    uint32_t operator () (const ValueType& val, uint32_t crc = 0xffffffff) const {
+        return hash(val, crc);
     }
 };
 
