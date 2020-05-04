@@ -230,23 +230,25 @@ endmacro(set_join)
 ###############################################################################
 # enable gtest framework, valgrind, and collection of results
 
-enable_testing()
-include(CTest)
+if (SAMPLING_BUILD_TESTS)
+  enable_testing()
+  include(CTest)
 
-### google test + mock - enable "make test" and add_test()
+  ### google test + mock - enable "make test" and add_test()
 
-# this fixes compilation with static libs on MSVC
-set(gtest_force_shared_crt ON CACHE BOOL "on" FORCE)
-if(NOT MSVC)
-  # silence some warnings
-  set(GTEST_SAVE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-missing-field-initializers -Wno-deprecated")
-endif()
+  # this fixes compilation with static libs on MSVC
+  set(gtest_force_shared_crt ON CACHE BOOL "on" FORCE)
+  if(NOT MSVC)
+    # silence some warnings
+    set(GTEST_SAVE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-missing-field-initializers -Wno-deprecated")
+  endif()
 
-add_subdirectory(extlib/googletest/googletest)
+  add_subdirectory(extlib/googletest/googletest)
 
-if(NOT MSVC)
-  set(CMAKE_CXX_FLAGS "${GTEST_SAVE_CXX_FLAGS}")
+  if(NOT MSVC)
+    set(CMAKE_CXX_FLAGS "${GTEST_SAVE_CXX_FLAGS}")
+  endif()
 endif()
 
 ################################################################################
