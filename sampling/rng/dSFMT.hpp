@@ -54,6 +54,8 @@
 
 #pragma once
 
+#include "../config.hpp"
+
 #include <tlx/logger.hpp>
 #include <tlx/define.hpp>
 
